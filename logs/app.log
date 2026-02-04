@@ -1,0 +1,8 @@
+2026-02-04 01:52:17 [main] INFO  com.revworkforce.service.AuthService - User logged in successfully: ADMIN001
+2026-02-04 01:52:59 [main] WARN  com.revworkforce.service.AuthService - Failed login attempt - Incorrect Password: ADMIN001
+2026-02-04 09:55:35 [main] WARN  com.revworkforce.service.AuthService - Failed login attempt - Incorrect Password: E001
+2026-02-04 09:55:36 [main] INFO  com.revworkforce.service.AuthService - User logged in successfully: E001
+2026-02-04 09:55:37 [main] WARN  com.revworkforce.service.AuthService - Failed login attempt - Account Locked: E001
+2026-02-04 10:36:44 [main] WARN  com.revworkforce.service.AuthService - Failed login attempt - Incorrect Password: E001
+2026-02-04 10:36:44 [main] INFO  com.revworkforce.service.AuthService - User logged in successfully: E001
+2026-02-04 10:36:45 [main] WARN  com.revworkforce.service.AuthService - Failed login attempt - Account Locked: E001
