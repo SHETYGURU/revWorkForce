@@ -11,17 +11,17 @@ public class PerformanceDAO {
 
     public ResultSet getTeamGoals(String managerId) throws Exception {
         String sql = """
-            SELECT g.goal_id,
-                   g.employee_id,
-                   g.goal_description,
-                   g.deadline,
-                   g.priority,
-                   g.progress_percentage
-            FROM goals g
-            JOIN employees e ON g.employee_id = e.employee_id
-            WHERE e.manager_id = ?
-            ORDER BY g.deadline
-        """;
+                    SELECT g.goal_id,
+                           g.employee_id,
+                           g.goal_description,
+                           g.deadline,
+                           g.priority,
+                           g.progress_percentage
+                    FROM goals g
+                    JOIN employees e ON g.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    ORDER BY g.deadline
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -31,14 +31,14 @@ public class PerformanceDAO {
 
     public ResultSet getGoalCompletionSummary(String managerId) throws Exception {
         String sql = """
-            SELECT e.employee_id,
-                   COUNT(*) AS total_goals,
-                   SUM(CASE WHEN g.progress_percentage = 100 THEN 1 ELSE 0 END) AS completed_goals
-            FROM goals g
-            JOIN employees e ON g.employee_id = e.employee_id
-            WHERE e.manager_id = ?
-            GROUP BY e.employee_id
-        """;
+                    SELECT e.employee_id,
+                           COUNT(*) AS total_goals,
+                           SUM(CASE WHEN g.progress_percentage = 100 THEN 1 ELSE 0 END) AS completed_goals
+                    FROM goals g
+                    JOIN employees e ON g.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    GROUP BY e.employee_id
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -52,19 +52,18 @@ public class PerformanceDAO {
             String deliverables,
             String accomplishments,
             String improvements,
-            double rating
-    ) throws Exception {
+            double rating) throws Exception {
 
         String sql = """
-            INSERT INTO performance_reviews
-            (employee_id, cycle_id, key_deliverables,
-             major_accomplishments, areas_of_improvement,
-             self_assessment_rating, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'SUBMITTED')
-        """;
+                    INSERT INTO performance_reviews
+                    (employee_id, cycle_id, key_deliverables,
+                     major_accomplishments, areas_of_improvement,
+                     self_assessment_rating, status)
+                    VALUES (?, ?, ?, ?, ?, ?, 'SUBMITTED')
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, empId);
             ps.setInt(2, cycleId);
@@ -81,18 +80,17 @@ public class PerformanceDAO {
             String desc,
             Date deadline,
             String priority,
-            String metrics
-    ) throws Exception {
+            String metrics) throws Exception {
 
         String sql = """
-            INSERT INTO goals
-            (employee_id, goal_description, deadline,
-             priority, success_metrics, progress_percentage)
-            VALUES (?, ?, ?, ?, ?, 0)
-        """;
+                    INSERT INTO goals
+                    (employee_id, goal_description, deadline,
+                     priority, success_metrics, progress_percentage)
+                    VALUES (?, ?, ?, ?, ?, 0)
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, empId);
             ps.setString(2, desc);
@@ -105,12 +103,12 @@ public class PerformanceDAO {
 
     public ResultSet getMyGoals(String empId) throws Exception {
         String sql = """
-            SELECT goal_id, goal_description,
-                   deadline, priority, progress_percentage
-            FROM goals
-            WHERE employee_id = ?
-            ORDER BY deadline
-        """;
+                    SELECT goal_id, goal_description,
+                           deadline, priority, progress_percentage
+                    FROM goals
+                    WHERE employee_id = ?
+                    ORDER BY deadline
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -120,13 +118,13 @@ public class PerformanceDAO {
 
     public void updateGoalProgress(int goalId, int progress) throws Exception {
         String sql = """
-            UPDATE goals
-            SET progress_percentage = ?
-            WHERE goal_id = ?
-        """;
+                    UPDATE goals
+                    SET progress_percentage = ?
+                    WHERE goal_id = ?
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, progress);
             ps.setInt(2, goalId);
@@ -136,11 +134,11 @@ public class PerformanceDAO {
 
     public ResultSet getMyFeedback(String empId) throws Exception {
         String sql = """
-            SELECT manager_feedback, manager_rating
-            FROM performance_reviews
-            WHERE employee_id = ?
-              AND manager_feedback IS NOT NULL
-        """;
+                    SELECT manager_feedback, manager_rating
+                    FROM performance_reviews
+                    WHERE employee_id = ?
+                      AND manager_feedback IS NOT NULL
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -150,15 +148,15 @@ public class PerformanceDAO {
 
     public ResultSet getTeamReviews(String managerId) throws Exception {
         String sql = """
-            SELECT pr.review_id,
-                   pr.employee_id,
-                   pr.status,
-                   pr.self_assessment_rating
-            FROM performance_reviews pr
-            JOIN employees e ON pr.employee_id = e.employee_id
-            WHERE e.manager_id = ?
-            ORDER BY pr.submission_date DESC
-        """;
+                    SELECT pr.review_id,
+                           pr.employee_id,
+                           pr.status,
+                           pr.self_assessment_rating
+                    FROM performance_reviews pr
+                    JOIN employees e ON pr.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    ORDER BY pr.submitted_date DESC
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -168,16 +166,16 @@ public class PerformanceDAO {
 
     public void submitManagerFeedback(int reviewId, String feedback, int rating) throws Exception {
         String sql = """
-            UPDATE performance_reviews
-            SET manager_feedback = ?,
-                manager_rating = ?,
-                status = 'REVIEWED',
-                review_date = CURRENT_TIMESTAMP
-            WHERE review_id = ?
-        """;
+                    UPDATE performance_reviews
+                    SET manager_feedback = ?,
+                        manager_rating = ?,
+                        status = 'REVIEWED',
+                        review_date = CURRENT_TIMESTAMP
+                    WHERE review_id = ?
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, feedback);
             ps.setInt(2, rating);
@@ -188,17 +186,31 @@ public class PerformanceDAO {
 
     public ResultSet getTeamPerformanceSummary(String managerId) throws Exception {
         String sql = """
-            SELECT e.employee_id,
-                   AVG(pr.manager_rating) as avg_rating
-            FROM employees e
-            JOIN performance_reviews pr ON e.employee_id = pr.employee_id
-            WHERE e.manager_id = ?
-            GROUP BY e.employee_id
-        """;
+                    SELECT e.employee_id,
+                           AVG(pr.manager_rating) as avg_rating
+                    FROM employees e
+                    JOIN performance_reviews pr ON e.employee_id = pr.employee_id
+                    WHERE e.manager_id = ?
+                    GROUP BY e.employee_id
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, managerId);
         return ps.executeQuery();
+    }
+
+    public String getEmployeeIdForReview(int reviewId) throws Exception {
+        String sql = "SELECT employee_id FROM performance_reviews WHERE review_id = ?";
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, reviewId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("employee_id");
+                }
+            }
+        }
+        return null;
     }
 }

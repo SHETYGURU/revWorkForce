@@ -1,5 +1,8 @@
 package com.revworkforce.util;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -8,6 +11,8 @@ import java.sql.DriverManager;
  * Uses a static block to load the Oracle JDBC driver once.
  */
 public class DBConnection {
+
+    private static final Logger logger = LogManager.getLogger(DBConnection.class);
 
     // Database Configuration Constants
     private static final String URL = "jdbc:oracle:thin:@localhost:1521/XEPDB1";
@@ -22,7 +27,9 @@ public class DBConnection {
         try {
             Class.forName("oracle.jdbc.OracleDriver");
         } catch (ClassNotFoundException e) {
-            // Convert checked exception to runtime to halt application start if driver is missing
+            // Convert checked exception to runtime to halt application start if driver is
+            // missing
+            logger.fatal("CRITICAL: Oracle JDBC Driver not found!", e);
             throw new RuntimeException("CRITICAL: Oracle JDBC Driver not found!", e);
         }
     }

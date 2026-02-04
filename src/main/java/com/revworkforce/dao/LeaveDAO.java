@@ -8,12 +8,12 @@ public class LeaveDAO {
 
     public ResultSet getLeaveBalances(String empId) throws Exception {
         String sql = """
-            SELECT lt.leave_type_name, lb.total_allocated,
-                   lb.used_leaves, lb.available_leaves
-            FROM leave_balances lb
-            JOIN leave_types lt ON lb.leave_type_id = lt.leave_type_id
-            WHERE lb.employee_id = ?
-        """;
+                    SELECT lt.leave_type_name, lb.total_allocated,
+                           lb.used_leaves, lb.available_leaves
+                    FROM leave_balances lb
+                    JOIN leave_types lt ON lb.leave_type_id = lt.leave_type_id
+                    WHERE lb.employee_id = ?
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -24,17 +24,21 @@ public class LeaveDAO {
     public ResultSet getTeamLeaveRequests(String managerId) throws Exception {
 
         String sql = """
-        SELECT la.leave_application_id,
-               la.employee_id,
-               la.start_date,
-               la.end_date,
-               la.status
-        FROM leave_applications la
-        JOIN employees e ON la.employee_id = e.employee_id
-        WHERE e.manager_id = ?
-          AND la.status = 'PENDING'
-        ORDER BY la.applied_date
-    """;
+                    SELECT la.leave_application_id,
+                           la.employee_id,
+                           e.first_name,
+                           e.last_name,
+                           d.department_name,
+                           la.start_date,
+                           la.end_date,
+                           la.status
+                    FROM leave_applications la
+                    JOIN employees e ON la.employee_id = e.employee_id
+                    LEFT JOIN departments d ON e.department_id = d.department_id
+                    WHERE e.manager_id = ?
+                      AND la.status = 'PENDING'
+                    ORDER BY la.applied_date
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -46,17 +50,16 @@ public class LeaveDAO {
             int leaveId,
             String managerId,
             String status,
-            String comments
-    ) throws Exception {
+            String comments) throws Exception {
 
         String sql = """
-        UPDATE leave_applications
-        SET status = ?, manager_comments = ?, reviewed_by = ?, reviewed_date = SYSDATE
-        WHERE leave_application_id = ?
-    """;
+                    UPDATE leave_applications
+                    SET status = ?, manager_comments = ?, reviewed_by = ?, reviewed_date = SYSDATE
+                    WHERE leave_application_id = ?
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, status);
             ps.setString(2, comments);
@@ -71,18 +74,17 @@ public class LeaveDAO {
             int leaveTypeId,
             Date start,
             Date end,
-            String reason
-    ) throws Exception {
+            String reason) throws Exception {
 
         String sql = """
-            INSERT INTO leave_applications
-            (employee_id, leave_type_id, start_date, end_date,
-             status, reason)
-            VALUES (?, ?, ?, ?, 'PENDING', ?)
-        """;
+                    INSERT INTO leave_applications
+                    (employee_id, leave_type_id, start_date, end_date,
+                     status, reason)
+                    VALUES (?, ?, ?, ?, 'PENDING', ?)
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, empId);
             ps.setInt(2, leaveTypeId);
@@ -95,11 +97,11 @@ public class LeaveDAO {
 
     public ResultSet getMyLeaves(String empId) throws Exception {
         String sql = """
-            SELECT leave_application_id, start_date, end_date, status
-            FROM leave_applications
-            WHERE employee_id = ?
-            ORDER BY applied_date DESC
-        """;
+                    SELECT leave_application_id, start_date, end_date, status
+                    FROM leave_applications
+                    WHERE employee_id = ?
+                    ORDER BY applied_date DESC
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -116,16 +118,16 @@ public class LeaveDAO {
 
     public ResultSet getDepartmentLeaveReport() throws Exception {
         String sql = """
-            SELECT d.department_name, e.first_name || ' ' || e.last_name as emp_name,
-                   lt.leave_type_name, SUM(la.end_date - la.start_date + 1) as days_taken
-            FROM leave_applications la
-            JOIN employees e ON la.employee_id = e.employee_id
-            JOIN departments d ON e.department_id = d.department_id
-            JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
-            WHERE la.status = 'APPROVED'
-            GROUP BY d.department_name, e.first_name, e.last_name, lt.leave_type_name
-            ORDER BY d.department_name, emp_name
-        """;
+                    SELECT d.department_name, e.first_name || ' ' || e.last_name as emp_name,
+                           lt.leave_type_name, SUM(la.end_date - la.start_date + 1) as days_taken
+                    FROM leave_applications la
+                    JOIN employees e ON la.employee_id = e.employee_id
+                    JOIN departments d ON e.department_id = d.department_id
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE la.status = 'APPROVED'
+                    GROUP BY d.department_name, e.first_name, e.last_name, lt.leave_type_name
+                    ORDER BY d.department_name, emp_name
+                """;
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
         return ps.executeQuery();
@@ -133,12 +135,12 @@ public class LeaveDAO {
 
     public ResultSet getEmployeeLeaveReport(String empId) throws Exception {
         String sql = """
-            SELECT lt.leave_type_name, la.start_date, la.end_date, la.status, la.reason
-            FROM leave_applications la
-            JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
-            WHERE la.employee_id = ?
-            ORDER BY la.start_date DESC
-        """;
+                    SELECT lt.leave_type_name, la.start_date, la.end_date, la.status, la.reason
+                    FROM leave_applications la
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE la.employee_id = ?
+                    ORDER BY la.start_date DESC
+                """;
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, empId);
@@ -147,15 +149,15 @@ public class LeaveDAO {
 
     public void cancelLeave(int leaveId, String empId) throws Exception {
         String sql = """
-            UPDATE leave_applications
-            SET status = 'CANCELLED'
-            WHERE leave_application_id = ?
-              AND employee_id = ?
-              AND status = 'PENDING'
-        """;
+                    UPDATE leave_applications
+                    SET status = 'CANCELLED'
+                    WHERE leave_application_id = ?
+                      AND employee_id = ?
+                      AND status = 'PENDING'
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, leaveId);
             ps.setString(2, empId);
@@ -166,63 +168,83 @@ public class LeaveDAO {
     public ResultSet getTeamLeaveCalendar(String managerId) throws Exception {
 
         String sql = """
-        SELECT la.employee_id,
-               la.start_date,
-               la.end_date,
-               lt.leave_type_name
-        FROM leave_applications la
-        JOIN employees e ON la.employee_id = e.employee_id
-        JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
-        WHERE e.manager_id = ?
-          AND la.status = 'APPROVED'
-        ORDER BY la.start_date
-    """;
+                    SELECT la.employee_id,
+                           la.start_date,
+                           la.end_date,
+                           lt.leave_type_name
+                    FROM leave_applications la
+                    JOIN employees e ON la.employee_id = e.employee_id
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE e.manager_id = ?
+                      AND la.status = 'APPROVED'
+                    ORDER BY la.start_date
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, managerId);
         return ps.executeQuery();
     }
+
+    public ResultSet getApprovedLeavesForEmployee(String empId) throws Exception {
+        String sql = """
+                    SELECT la.employee_id,
+                           la.start_date,
+                           la.end_date,
+                           lt.leave_type_name
+                    FROM leave_applications la
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE la.employee_id = ?
+                      AND la.status = 'APPROVED'
+                    ORDER BY la.start_date
+                """;
+
+        Connection con = DBConnection.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, empId);
+        return ps.executeQuery();
+    }
+
     public ResultSet getTeamLeaveBalances(String managerId) throws Exception {
 
         String sql = """
-        SELECT lb.employee_id,
-               lt.leave_type_name,
-               lb.total_allocated,
-               lb.used_leaves,
-               lb.available_leaves
-        FROM leave_balances lb
-        JOIN leave_types lt ON lb.leave_type_id = lt.leave_type_id
-        JOIN employees e ON lb.employee_id = e.employee_id
-        WHERE e.manager_id = ?
-        ORDER BY lb.employee_id, lt.leave_type_name
-    """;
+                    SELECT lb.employee_id,
+                           lt.leave_type_name,
+                           lb.total_allocated,
+                           lb.used_leaves,
+                           lb.available_leaves
+                    FROM leave_balances lb
+                    JOIN leave_types lt ON lb.leave_type_id = lt.leave_type_id
+                    JOIN employees e ON lb.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    ORDER BY lb.employee_id, lt.leave_type_name
+                """;
 
         Connection con = DBConnection.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, managerId);
         return ps.executeQuery();
     }
+
     public void assignLeaveQuota(
             String empId,
             int leaveTypeId,
             int year,
-            int total
-    ) throws Exception {
+            int total) throws Exception {
 
         String updateSql = """
-            UPDATE leave_balances
-            SET total_allocated = ?,
-                available_leaves = ? - used_leaves
-            WHERE employee_id = ? AND leave_type_id = ? AND year = ?
-        """;
+                    UPDATE leave_balances
+                    SET total_allocated = ?,
+                        available_leaves = ? - used_leaves
+                    WHERE employee_id = ? AND leave_type_id = ? AND year = ?
+                """;
 
         String insertSql = """
-            INSERT INTO leave_balances
-            (employee_id, leave_type_id, year,
-             total_allocated, used_leaves, available_leaves)
-            VALUES (?, ?, ?, ?, 0, ?)
-        """;
+                    INSERT INTO leave_balances
+                    (employee_id, leave_type_id, year,
+                     total_allocated, used_leaves, available_leaves)
+                    VALUES (?, ?, ?, ?, 0, ?)
+                """;
 
         try (Connection con = DBConnection.getConnection()) {
             boolean updated = false;
@@ -248,24 +270,24 @@ public class LeaveDAO {
             }
         }
     }
+
     public void adjustLeaveBalance(
             int balanceId,
             int total,
-            int used
-    ) throws Exception {
+            int used) throws Exception {
 
         int available = total - used;
 
         String sql = """
-        UPDATE leave_balances
-        SET total_allocated = ?,
-            used_leaves = ?,
-            available_leaves = ?
-        WHERE leave_balance_id = ?
-    """;
+                    UPDATE leave_balances
+                    SET total_allocated = ?,
+                        used_leaves = ?,
+                        available_leaves = ?
+                    WHERE leave_balance_id = ?
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, total);
             ps.setInt(2, used);
@@ -274,17 +296,18 @@ public class LeaveDAO {
             ps.executeUpdate();
         }
     }
+
     public void revokeApprovedLeave(int leaveId) throws Exception {
 
         String sql = """
-        UPDATE leave_applications
-        SET status = 'REVOKED'
-        WHERE leave_application_id = ?
-          AND status = 'APPROVED'
-    """;
+                    UPDATE leave_applications
+                    SET status = 'REVOKED'
+                    WHERE leave_application_id = ?
+                      AND status = 'APPROVED'
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, leaveId);
             ps.executeUpdate();
@@ -294,17 +317,31 @@ public class LeaveDAO {
     public void addHoliday(String name, Date date) throws Exception {
 
         String sql = """
-        INSERT INTO holidays (holiday_name, holiday_date)
-        VALUES (?, ?)
-    """;
+                    INSERT INTO holidays (holiday_name, holiday_date)
+                    VALUES (?, ?)
+                """;
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, name);
             ps.setDate(2, date);
             ps.executeUpdate();
         }
+    }
+
+    public String getEmployeeIdForLeave(int leaveId) throws Exception {
+        String sql = "SELECT employee_id FROM leave_applications WHERE leave_application_id = ?";
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, leaveId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("employee_id");
+                }
+            }
+        }
+        return null;
     }
 
 }

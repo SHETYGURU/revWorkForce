@@ -18,16 +18,18 @@ public class MainMenu {
             System.out.println("   WELCOME TO REV WORKFORCE     ");
             System.out.println("=================================");
             System.out.println("1.  Login");
-            System.out.println("2.  Exit System");
+            System.out.println("2.  Forgot Password");
+            System.out.println("3.  Exit System");
             System.out.println("=================================");
 
             int choice = InputUtil.readInt("Select Option: ");
 
             switch (choice) {
                 case 1 -> login();
-                case 2 -> {
+                case 2 -> AuthService.forgotPasswordFlow();
+                case 3 -> {
                     System.out.println("Exiting system. Goodbye!");
-                    InputUtil.close(); 
+                    InputUtil.close();
                     System.exit(0);
                 }
                 default -> System.out.println("Invalid option. Please try again.");
@@ -53,17 +55,17 @@ public class MainMenu {
                 // Assuming we can get role from DB or it was populated.
                 // Refetching role for navigation
                 try {
-                   String role = new RoleDAO().getEmployeeRole(emp.getEmployeeId());
-                   System.out.println("Welcome, " + emp.getFirstName() + " (" + role + ")");
-                   
-                   switch (role.toUpperCase()) {
-                       case "ADMIN" -> AdminMenu.start();
-                       case "MANAGER" -> ManagerMenu.start();
-                       case "EMPLOYEE" -> EmployeeMenu.start();
-                       default -> System.out.println("Error: No valid menu for role: " + role);
-                   }
+                    String role = new RoleDAO().getEmployeeRole(emp.getEmployeeId());
+                    System.out.println("Welcome, " + emp.getFirstName() + " (" + role + ")");
+
+                    switch (role.toUpperCase()) {
+                        case "ADMIN" -> AdminMenu.start();
+                        case "MANAGER" -> ManagerMenu.start();
+                        case "EMPLOYEE" -> EmployeeMenu.start();
+                        default -> System.out.println("Error: No valid menu for role: " + role);
+                    }
                 } catch (Exception e) {
-                   System.out.println("Error fetching user role: " + e.getMessage());
+                    System.out.println("Error fetching user role: " + e.getMessage());
                 }
             }
         }

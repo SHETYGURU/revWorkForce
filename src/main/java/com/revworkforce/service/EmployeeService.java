@@ -2,7 +2,6 @@ package com.revworkforce.service;
 
 import com.revworkforce.dao.AnnouncementDAO;
 import com.revworkforce.dao.EmployeeDAO;
-import com.revworkforce.exception.AppException;
 import com.revworkforce.util.InputUtil;
 
 import java.sql.ResultSet;
@@ -49,16 +48,80 @@ public class EmployeeService {
      */
     public static void updateProfile(String empId) {
         try {
-            String phone = InputUtil.readString("New Phone: ");
-            String address = InputUtil.readString("New Address: ");
-            String emergency = InputUtil.readString("Emergency Contact: ");
+            // Fetch current details
+            ResultSet rs = employeeDAO.getProfile(empId);
+            String currentPhone = "";
+            String currentAddress = "";
+            String currentEmergency = "";
 
-            employeeDAO.updateProfile(empId, phone, address, emergency);
+            if (rs.next()) {
+                currentPhone = rs.getString("phone");
+                currentAddress = rs.getString("address");
+                currentEmergency = rs.getString("emergency_contact");
+            }
+
+            // Handle nulls for display
+            if (currentPhone == null)
+                currentPhone = "";
+            if (currentAddress == null)
+                currentAddress = "";
+            if (currentEmergency == null)
+                currentEmergency = "";
+
+            System.out.println("Enter new details (press Enter to keep existing value):");
+
+            String phoneInput = InputUtil.readString("Phone [" + currentPhone + "]: ");
+            String newPhone = phoneInput.isEmpty() ? currentPhone : phoneInput;
+
+            String addressInput = InputUtil.readString("Address [" + currentAddress + "]: ");
+            String newAddress = addressInput.isEmpty() ? currentAddress : addressInput;
+
+            String emergencyInput = InputUtil.readString("Emergency Contact [" + currentEmergency + "]: ");
+            String newEmergency = emergencyInput.isEmpty() ? currentEmergency : emergencyInput;
+
+            employeeDAO.updateProfile(empId, newPhone, newAddress, newEmergency);
             AuditService.log(empId, "UPDATE", "EMPLOYEES", empId, "Profile updated");
 
             System.out.println("Profile updated successfully");
         } catch (Exception e) {
             System.err.println("Profile update failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Prompts the user to change their password.
+     *
+     * @param empId The employee ID.
+     */
+    public static void changePassword(String empId) {
+        try {
+            System.out.println("\n--- CHANGE PASSWORD ---");
+            String oldPass = InputUtil.readString("Current Password: ");
+            String newPass = InputUtil.readString("New Password: ");
+            String confirmPass = InputUtil.readString("Confirm New Password: ");
+
+            if (!newPass.equals(confirmPass)) {
+                System.out.println("New passwords do not match.");
+                return;
+            }
+
+            if (newPass.isEmpty()) {
+                System.out.println("Password cannot be empty.");
+                return;
+            }
+
+            // Call AuthService to handle verification and update
+            boolean success = AuthService.changePassword(empId, oldPass, newPass);
+
+            if (success) {
+                System.out.println("Password changed successfully.");
+                AuditService.log(empId, "UPDATE", "EMPLOYEES", empId, "Password changed");
+            } else {
+                // AuthService prints specific errors (incorrect old password)
+            }
+
+        } catch (Exception e) {
+            System.err.println("Password change failed: " + e.getMessage());
         }
     }
 

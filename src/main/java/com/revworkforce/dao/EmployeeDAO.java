@@ -1,6 +1,5 @@
 package com.revworkforce.dao;
 
-import com.revworkforce.exception.AppException;
 import com.revworkforce.model.Employee;
 import com.revworkforce.util.DBConnection;
 
@@ -65,6 +64,18 @@ public class EmployeeDAO {
         return ps.executeQuery();
     }
 
+    public boolean isReportee(String managerId, String empId) throws Exception {
+        String sql = "SELECT 1 FROM employees WHERE manager_id = ? AND employee_id = ?";
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, managerId);
+            ps.setString(2, empId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public void updateProfile(String empId, String phone, String address, String emergency) throws Exception {
         String sql = """
                     UPDATE employees
@@ -105,7 +116,7 @@ public class EmployeeDAO {
 
     public ResultSet getUpcomingBirthdays() throws Exception {
         String sql = """
-                    SELECT first_name, date_of_birth
+                    SELECT employee_id, first_name, date_of_birth
                     FROM employees
                     WHERE TO_CHAR(date_of_birth,'MMDD')
                           BETWEEN TO_CHAR(SYSDATE,'MMDD')
@@ -117,13 +128,38 @@ public class EmployeeDAO {
         return ps.executeQuery();
     }
 
+    public ResultSet getBirthdaysToday() throws Exception {
+        String sql = """
+                    SELECT employee_id, first_name
+                    FROM employees
+                    WHERE TO_CHAR(date_of_birth,'MMDD') = TO_CHAR(SYSDATE,'MMDD')
+                """;
+
+        Connection con = DBConnection.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        return ps.executeQuery();
+    }
+
     public ResultSet getWorkAnniversaries() throws Exception {
         String sql = """
-                    SELECT first_name, joining_date
+                    SELECT employee_id, first_name, joining_date
                     FROM employees
                     WHERE TO_CHAR(joining_date,'MMDD')
                           BETWEEN TO_CHAR(SYSDATE,'MMDD')
                           AND TO_CHAR(SYSDATE+30,'MMDD')
+                """;
+
+        Connection con = DBConnection.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        return ps.executeQuery();
+    }
+
+    public ResultSet getWorkAnniversariesToday() throws Exception {
+        String sql = """
+                    SELECT employee_id, first_name, joining_date
+                    FROM employees
+                    WHERE TO_CHAR(joining_date,'MMDD') = TO_CHAR(SYSDATE,'MMDD')
+                      AND TO_CHAR(joining_date,'YYYY') != TO_CHAR(SYSDATE,'YYYY')
                 """;
 
         Connection con = DBConnection.getConnection();
@@ -291,6 +327,29 @@ public class EmployeeDAO {
             ps.setString(1, empId);
             ps.executeUpdate();
         }
+    }
+
+    public boolean updatePassword(String empId, String newHash) throws Exception {
+        String sql = "UPDATE employees SET password_hash = ? WHERE employee_id = ?";
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, newHash);
+            ps.setString(2, empId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public ResultSet getSecurityDetails(String empId) throws Exception {
+        String sql = """
+                    SELECT q.question_text, es.answer_hash
+                    FROM employee_security es
+                    JOIN security_questions q ON es.question_id = q.question_id
+                    WHERE es.employee_id = ?
+                """;
+        Connection con = DBConnection.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, empId);
+        return ps.executeQuery();
     }
 
     // Implemented Methods
