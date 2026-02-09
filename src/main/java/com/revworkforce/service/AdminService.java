@@ -1,18 +1,29 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.service;
 
 import com.revworkforce.dao.AuditLogDAO;
 import com.revworkforce.dao.EmployeeDAO;
 import com.revworkforce.util.DBConnection;
 import com.revworkforce.util.InputUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import com.revworkforce.model.Employee;
 
 /**
  * Service class for Administrator operations.
- * Handles extensive user management and system configuration.
+ * Handles extensive user management, system configuration, and high-level
+ * overrides.
+ * 
+ * @author Gururaj Shetty
  */
 public class AdminService {
+
+    private static final Logger logger = LogManager.getLogger(AdminService.class);
 
     private static EmployeeDAO employeeDAO = new EmployeeDAO();
     private static AuditLogDAO auditDAO = new AuditLogDAO();
@@ -33,136 +44,209 @@ public class AdminService {
                 : "ADMIN001"; // Fallback for safety
     }
 
+    /**
+     * Initiates the employee onboarding process.
+     * Collects details via modular prompts to create a new employee record.
+     */
     public static void addEmployee() {
         try {
             System.out.println("\n--- ADD NEW EMPLOYEE ---");
+            Employee emp = new Employee();
 
             // 1. Role & ID Generation
-            String roleInput = InputUtil.readValidatedString(
-                    "Is this employee a Manager? (Y/N): ",
-                    s -> s.equalsIgnoreCase("Y") || s.equalsIgnoreCase("N"),
-                    "Invalid input. Please enter 'Y' or 'N'.");
-            String prefix = roleInput.equalsIgnoreCase("Y") ? "MGR" : "EMP";
-            String id = employeeDAO.getNextId(prefix);
-            System.out.println("Generated Employee ID: " + id);
+            boolean isManager = promptRole();
+            String prefix = isManager ? "MGR" : "EMP";
+            emp.setEmployeeId(employeeDAO.getNextId(prefix));
+            System.out.println("Generated Employee ID: " + emp.getEmployeeId());
 
             // 2. Personal Info
-            String firstName = InputUtil.readValidatedString("First Name: ", s -> !s.isEmpty(),
-                    "First Name cannot be empty.");
-            String lastName = InputUtil.readValidatedString("Last Name: ", s -> !s.isEmpty(),
-                    "Last Name cannot be empty.");
-
-            // Email Validation & Uniqueness Check
-            String email = InputUtil.readValidatedString("Email: ", input -> {
-                if (!com.revworkforce.util.ValidationUtil.isValidEmail(input))
-                    return "Invalid email format.";
-                try {
-                    if (employeeDAO.isEmailExists(input))
-                        return "Email already exists.";
-                } catch (Exception e) {
-                    return "Error checking email uniqueness: " + e.getMessage();
-                }
-                return null;
-            });
-
-            // Phone Validation & Uniqueness Check
-            String phone = InputUtil.readValidatedString("Phone: ", input -> {
-                if (!com.revworkforce.util.ValidationUtil.isValidPhone(input))
-                    return "Phone must be 10 digits.";
-                try {
-                    if (employeeDAO.isPhoneExists(input))
-                        return "Phone number already exists.";
-                } catch (Exception e) {
-                    return "Error checking phone uniqueness: " + e.getMessage();
-                }
-                return null;
-            });
-
-            String address = InputUtil.readValidatedString("Address: ", s -> !s.isEmpty(), "Address cannot be empty.");
-            String emergencyContact = InputUtil.readValidatedString("Emergency Contact: ", s -> !s.isEmpty(),
-                    "Emergency Contact cannot be empty.");
-
-            // DOB Validation
-            String dob = InputUtil.readValidatedString("DOB (YYYY-MM-DD): ", input -> {
-                if (!input.matches("\\d{4}-\\d{2}-\\d{2}"))
-                    return "Invalid date format. Use YYYY-MM-DD.";
-                return null;
-            });
+            promptPersonalInfo(emp);
 
             // 3. Joining Date
-            System.out.println("Joining Date: 1. Today  2. Enter Manually");
-            int dateChoice = InputUtil.readInt("Select Option: ");
-            String joiningDate;
-            if (dateChoice == 1) {
-                joiningDate = java.time.LocalDate.now().toString();
-            } else {
-                joiningDate = InputUtil.readValidatedString("Enter Date (YYYY-MM-DD): ", input -> {
-                    if (!input.matches("\\d{4}-\\d{2}-\\d{2}"))
-                        return "Invalid date format. Use YYYY-MM-DD.";
-                    return null;
-                });
-            }
+            emp.setJoiningDate(promptJoiningDate());
 
             // 4. Professional Info
-            departmentDAO.printDepartments();
-            String dept = InputUtil.readValidatedString("Department ID: ", input -> {
-                try {
-                    if (departmentDAO.isDepartmentIdExists(input))
-                        return null;
-                    return "Invalid Department ID. Please choose from the list above.";
-                } catch (Exception e) {
-                    return "Error validating Department ID: " + e.getMessage();
-                }
-            });
+            promptProfessionalInfo(emp, isManager);
 
-            boolean isManagerRole = "MGR".equals(prefix);
-            designationDAO.printDesignations(isManagerRole);
-            String desig = InputUtil.readValidatedString("Designation ID: ", input -> {
-                try {
-                    if (!designationDAO.isDesignationIdExists(input)) {
-                        return "Invalid Designation ID. Please choose from the list above.";
-                    }
-                    if (!designationDAO.isDesignationMatchRole(input, isManagerRole)) {
-                        return "Invalid Designation for this role. Please choose a "
-                                + (isManagerRole ? "Manager" : "Non-Manager") + " designation.";
-                    }
-                    return null;
-                } catch (Exception e) {
-                    return "Error validating Designation ID: " + e.getMessage();
-                }
-            });
+            // 5. Default Password & Salary
+            emp.setPasswordHash(com.revworkforce.util.PasswordUtil.hashPassword("password"));
+            emp.setSalary(promptSalary());
 
-            String mgr = "";
-            if (!prefix.equals("MGR")) {
-                mgr = InputUtil.readString("Manager ID (Press Enter to skip): ");
-            }
+            employeeDAO.insertEmployee(emp);
 
-            String salaryInput = InputUtil.readValidatedString("Salary: ", s -> {
-                try {
-                    Double.parseDouble(s);
-                    return true;
-                } catch (NumberFormatException e) {
-                    return false;
-                }
-            }, "Invalid salary. Please enter a number.");
-            double salary = Double.parseDouble(salaryInput);
-
-            // 5. Default Password
-            String passwordHash = com.revworkforce.util.PasswordUtil.hashPassword("password");
-
-            employeeDAO.insertEmployee(
-                    id, firstName, lastName, email, phone, address, emergencyContact, dob,
-                    dept, desig, mgr, salary, joiningDate, passwordHash);
-
-            AuditService.log(getAdminId(), "CREATE", "EMPLOYEES", id, "Admin onboarding completed");
+            AuditService.log(getAdminId(), "CREATE", "EMPLOYEES", emp.getEmployeeId(), "Admin onboarding completed");
+            logger.info("New employee onboarding completed: {} ({})", emp.getFirstName(), emp.getEmployeeId());
             System.out.println(
-                    "Employee " + firstName + " (" + id + ") added successfully. Default password is 'password'.");
+                    "Employee " + emp.getFirstName() + " (" + emp.getEmployeeId()
+                            + ") added successfully. Default password is 'password'.");
 
         } catch (Exception e) {
-            System.err.println("Failed to add employee: " + e.getMessage());
+            logger.error("Failed to add employee: " + e.getMessage(), e);
         }
     }
 
+    private static boolean promptRole() {
+        String roleInput = InputUtil.readValidatedString(
+                "Is this employee a Manager? (Y/N): ",
+                s -> s.equalsIgnoreCase("Y") || s.equalsIgnoreCase("N"),
+                "Invalid input. Please enter 'Y' or 'N'.");
+        return roleInput.equalsIgnoreCase("Y");
+    }
+
+    private static void promptPersonalInfo(Employee emp) {
+        emp.setFirstName(
+                InputUtil.readValidatedString("First Name: ", s -> !s.isEmpty(), "First Name cannot be empty."));
+        emp.setLastName(InputUtil.readValidatedString("Last Name: ", s -> !s.isEmpty(), "Last Name cannot be empty."));
+
+        emp.setEmail(InputUtil.readValidatedString("Email: ", AdminService::validateEmail));
+
+        emp.setPhone(InputUtil.readValidatedString("Phone: ", AdminService::validatePhone));
+
+        emp.setAddress(InputUtil.readValidatedString("Address: ", s -> !s.isEmpty(), "Address cannot be empty."));
+        emp.setEmergencyContact(InputUtil.readValidatedString("Emergency Contact: ", s -> !s.isEmpty(),
+                "Emergency Contact cannot be empty."));
+
+        String dobStr = InputUtil.readValidatedString("DOB (YYYY-MM-DD): ", AdminService::validateDateFormat);
+        emp.setDateOfBirth(java.sql.Date.valueOf(dobStr));
+    }
+
+    private static java.sql.Date promptJoiningDate() {
+        System.out.println("Joining Date: 1. Today  2. Enter Manually");
+        int dateChoice = InputUtil.readInt("Select Option: ");
+        if (dateChoice == 1) {
+            return java.sql.Date.valueOf(java.time.LocalDate.now());
+        } else {
+            String dateStr = InputUtil.readValidatedString("Enter Date (YYYY-MM-DD): ",
+                    AdminService::validateDateFormat);
+            return java.sql.Date.valueOf(dateStr);
+        }
+    }
+
+    private static void promptProfessionalInfo(Employee emp, boolean isManagerRole) {
+        departmentDAO.printDepartments();
+        String deptStr = InputUtil.readValidatedString("Department ID: ", AdminService::validateDepartment);
+        emp.setDepartmentId(Integer.parseInt(deptStr));
+
+        designationDAO.printDesignations(isManagerRole);
+        String desigStr = InputUtil.readValidatedString("Designation ID: ",
+                input -> validateDesignation(input, isManagerRole));
+        emp.setDesignationId(Integer.parseInt(desigStr));
+
+        if (!"MGR".equals(emp.getEmployeeId().substring(0, 3))) {
+            String mgr = InputUtil.readString("Manager ID (Press Enter to skip): ");
+            emp.setManagerId(mgr.isEmpty() ? null : mgr);
+        }
+    }
+
+    private static Double promptSalary() {
+        String salaryInput = InputUtil.readValidatedString("Salary: ", s -> {
+            try {
+                Double.parseDouble(s);
+                return true;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }, "Invalid salary. Please enter a number.");
+        return Double.parseDouble(salaryInput);
+    }
+
+    /*
+     * =============================================================================
+     * ======
+     * VALIDATION METHODS
+     * =============================================================================
+     * ======
+     */
+
+    /**
+     * Validates email format and uniqueness.
+     * 
+     * @param input Email to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validateEmail(String input) {
+        if (!com.revworkforce.util.ValidationUtil.isValidEmail(input))
+            return "Invalid email format.";
+        try {
+            if (employeeDAO.isEmailExists(input))
+                return "Email already exists.";
+        } catch (Exception e) {
+            return "Error checking email uniqueness: " + e.getMessage();
+        }
+        return null;
+    }
+
+    /**
+     * Validates phone format and uniqueness.
+     * 
+     * @param input Phone to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validatePhone(String input) {
+        if (!com.revworkforce.util.ValidationUtil.isValidPhone(input))
+            return "Phone must be 10 digits.";
+        try {
+            if (employeeDAO.isPhoneExists(input))
+                return "Phone number already exists.";
+        } catch (Exception e) {
+            return "Error checking phone uniqueness: " + e.getMessage();
+        }
+        return null;
+    }
+
+    /**
+     * Validates date format (YYYY-MM-DD).
+     * 
+     * @param input Date string to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validateDateFormat(String input) {
+        if (!input.matches("\\d{4}-\\d{2}-\\d{2}"))
+            return "Invalid date format. Use YYYY-MM-DD.";
+        return null;
+    }
+
+    /**
+     * Validates department ID exists.
+     * 
+     * @param input Department ID to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validateDepartment(String input) {
+        try {
+            if (departmentDAO.isDepartmentIdExists(input))
+                return null;
+            return "Invalid Department ID.";
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    /**
+     * Validates designation ID and role match.
+     * 
+     * @param input         Designation ID to validate
+     * @param isManagerRole Whether this is for a manager role
+     * @return Error message if invalid, null if valid
+     */
+    static String validateDesignation(String input, boolean isManagerRole) {
+        try {
+            if (!designationDAO.isDesignationIdExists(input))
+                return "Invalid Designation ID.";
+            if (!designationDAO.isDesignationMatchRole(input, isManagerRole))
+                return "Invalid Designation for role.";
+            return null;
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    /**
+     * 
+     * Updates an existing employee's details.
+     * Allows modification of contact information and professional details
+     * (Department, Designation, Salary).
+     */
     public static void updateEmployee() {
         try {
             System.out.println("\n--- UPDATE EMPLOYEE ---");
@@ -173,17 +257,7 @@ public class AdminService {
             int choice = InputUtil.readInt("Select Option: ");
 
             if (choice == 1) {
-                String phone = InputUtil.readValidatedString("New Phone: ", input -> {
-                    if (!com.revworkforce.util.ValidationUtil.isValidPhone(input))
-                        return "Phone must be 10 digits.";
-                    try {
-                        if (employeeDAO.isPhoneExists(input))
-                            return "Phone number already exists.";
-                    } catch (Exception e) {
-                        return "Error checking phone uniqueness: " + e.getMessage();
-                    }
-                    return null;
-                });
+                String phone = InputUtil.readValidatedString("New Phone: ", AdminService::validatePhone);
 
                 String addr = InputUtil.readValidatedString("New Address: ", s -> !s.isEmpty(),
                         "Address cannot be empty.");
@@ -192,8 +266,8 @@ public class AdminService {
 
                 employeeDAO.updateProfile(id, phone, addr, emg);
                 AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", "Phone", id, "Updated Phone");
-                AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", "Address", id, "Updated Address");
                 AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", "Emergency", id, "Updated Emergency Contact");
+                logger.info("Employee contact info updated for: {}", id);
                 System.out.println("Contact info updated successfully");
 
             } else if (choice == 2) {
@@ -204,13 +278,14 @@ public class AdminService {
 
                 employeeDAO.updateProfessionalDetails(id, dept, desig, salary, mgr);
                 AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", "Dept/Desig", id, "Updated professional details");
+                logger.info("Employee professional details updated for: {}", id);
                 System.out.println("Professional info updated successfully");
             } else {
                 System.out.println("Invalid option.");
             }
 
         } catch (Exception e) {
-            System.err.println("Update failed: " + e.getMessage());
+            logger.error("Update failed: " + e.getMessage(), e);
         }
     }
 
@@ -223,21 +298,26 @@ public class AdminService {
             String empId = InputUtil.readString("Employee ID to Toggle: ");
             employeeDAO.toggleStatus(empId);
             AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", empId, "Status toggled");
+            logger.info("Employee status toggled for: {}", empId);
             System.out.println("Employee status updated.");
         } catch (Exception e) {
-            System.err.println("Failed to toggle status: " + e.getMessage());
+            logger.error("Failed to toggle status: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Assigns or changes the reporting manager for an employee.
+     */
     public static void assignManager() {
         try {
             String empId = InputUtil.readString("Employee ID: ");
             String mgrId = InputUtil.readString("New Manager ID: ");
             employeeDAO.assignManager(empId, mgrId);
             AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", empId, "Manager changed to " + mgrId);
+            logger.info("Manager assigned for employee {}: New Manager {}", empId, mgrId);
             System.out.println("Manager assigned successfully.");
         } catch (Exception e) {
-            System.err.println("Failed to assign manager: " + e.getMessage());
+            logger.error("Failed to assign manager: " + e.getMessage(), e);
         }
     }
 
@@ -245,6 +325,10 @@ public class AdminService {
         EmployeeService.employeeDirectory();
     }
 
+    /**
+     * Unlocks an employee's account by resetting failed login attempts.
+     * This is an administrative override for security lockouts.
+     */
     public static void unlockEmployeeAccount() {
         String empId = InputUtil.readString("Employee ID to unlock: ");
         try {
@@ -261,16 +345,21 @@ public class AdminService {
                 int rows = ps.executeUpdate();
                 if (rows > 0) {
                     AuditService.log(getAdminId(), "UNLOCK", "EMPLOYEES", empId, "Account unlocked");
+                    logger.info("Account unlocked for employee: {}", empId);
                     System.out.println("Account unlocked successfully.");
                 } else {
                     System.out.println("Employee not found.");
                 }
             }
         } catch (Exception e) {
-            System.err.println("Unlock failed: " + e.getMessage());
+            logger.error("Unlock failed: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Resets an employee's password to a new value provided by the admin.
+     * The new password is immediately hashed before storage.
+     */
     public static void resetUserPassword() {
         String empId = InputUtil.readString("Employee ID to Reset Password: ");
         try {
@@ -286,13 +375,14 @@ public class AdminService {
 
             if (updated) {
                 AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", empId, "Password reset by Admin");
+                logger.info("Password reset by Admin for employee: {}", empId);
                 System.out.println("Password reset successfully.");
             } else {
                 System.out.println("Employee ID not found.");
             }
 
         } catch (Exception e) {
-            System.err.println("Password reset failed: " + e.getMessage());
+            logger.error("Password reset failed: " + e.getMessage(), e);
         }
     }
 

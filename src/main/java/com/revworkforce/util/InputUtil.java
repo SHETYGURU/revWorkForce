@@ -1,14 +1,36 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.util;
 
 import java.util.Scanner;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Utility class to handle Console Input operations effectively.
  * Prevents scanner resource leaks and handles basic type parsing.
+ * 
+ * @author Gururaj Shetty
  */
 public class InputUtil {
 
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Logger logger = LogManager.getLogger(InputUtil.class);
+
+    private InputUtil() {
+        // Private constructor to prevent instantiation
+    }
+
+    private static Scanner scanner = new Scanner(System.in);
+
+    /**
+     * Sets the scanner instance. Useful for testing.
+     * 
+     * @param s The scanner to use.
+     */
+    public static void setScanner(Scanner s) {
+        scanner = s;
+    }
 
     /**
      * Reads a string input from the console.
@@ -35,7 +57,7 @@ public class InputUtil {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input! Please enter a valid number.");
+                logger.warn(MessageConstants.INVALID_NUMBER_INPUT);
             }
         }
     }
@@ -44,28 +66,30 @@ public class InputUtil {
      * Reads a string input from the console and validates it using a predicate.
      * Retries until valid input is provided.
      *
-     * @param prompt The message to display to the user.
-     * @param validator A predicate that returns true if the input is valid.
+     * @param prompt       The message to display to the user.
+     * @param validator    A predicate that returns true if the input is valid.
      * @param errorMessage The error message to display if validation fails.
      * @return The validated string input.
      */
-    public static String readValidatedString(String prompt, java.util.function.Predicate<String> validator, String errorMessage) {
+    public static String readValidatedString(String prompt, java.util.function.Predicate<String> validator,
+            String errorMessage) {
         while (true) {
             String input = readString(prompt);
             if (validator.test(input)) {
                 return input;
             }
-            System.err.println(errorMessage);
+            logger.warn(errorMessage);
         }
     }
 
     /**
      * Reads a string input from the console and validates it using a function.
-     * The function should return null (or optional empty-like behavior) if valid, 
+     * The function should return null (or optional empty-like behavior) if valid,
      * or an error string if invalid.
      * 
-     * @param prompt The message to display to the user.
-     * @param validator A function that returns null if valid, or an error message string if invalid.
+     * @param prompt    The message to display to the user.
+     * @param validator A function that returns null if valid, or an error message
+     *                  string if invalid.
      * @return The validated string input.
      */
     public static String readValidatedString(String prompt, java.util.function.Function<String, String> validator) {
@@ -75,7 +99,7 @@ public class InputUtil {
             if (error == null) {
                 return input;
             }
-            System.err.println(error);
+            logger.warn(error);
         }
     }
 

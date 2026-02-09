@@ -1,14 +1,27 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.service;
 
 import com.revworkforce.dao.EmployeeDAO;
 import com.revworkforce.dao.NotificationDAO;
 
 import java.sql.ResultSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+/**
+ * Service class for handling system notifications.
+ * Manages notification creation, retrieval, and daily generation tasks.
+ * 
+ * @author Gururaj Shetty
+ */
 public class NotificationService {
 
-    private static final NotificationDAO dao = new NotificationDAO();
-    private static final EmployeeDAO employeeDAO = new EmployeeDAO();
+    private static final Logger logger = LogManager.getLogger(NotificationService.class);
+
+    private static NotificationDAO dao = new NotificationDAO();
+    private static EmployeeDAO employeeDAO = new EmployeeDAO();
 
     public static int getUnreadCount(String empId) {
         try {
@@ -22,7 +35,7 @@ public class NotificationService {
         try {
             dao.printAndMarkRead(empId);
         } catch (Exception e) {
-            System.err.println("Unable to fetch notifications");
+            logger.error("Unable to fetch notifications", e);
         }
     }
 
@@ -36,9 +49,14 @@ public class NotificationService {
         dao.createNotification(empId, "PERFORMANCE", message);
     }
 
+    /**
+     * Generates recurring daily notifications.
+     * triggers automated alerts for Birthdays and Work Anniversaries.
+     * Should be scheduled to run once per day.
+     */
     public static void generateDailyNotifications() {
         try {
-            System.out.println("Generating daily notifications...");
+            logger.info("Generating daily notifications...");
             // Birthdays
             try (ResultSet rs = employeeDAO.getBirthdaysToday()) {
                 while (rs.next()) {
@@ -55,10 +73,10 @@ public class NotificationService {
                     dao.createNotification(empId, "ANNIVERSARY", "Happy Work Anniversary!");
                 }
             }
-            System.out.println("Daily notifications generated.");
+            logger.info("Daily notifications generated.");
 
         } catch (Exception e) {
-            System.err.println("Error generating daily notifications: " + e.getMessage());
+            logger.error("Error generating daily notifications: " + e.getMessage(), e);
         }
     }
 }

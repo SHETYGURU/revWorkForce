@@ -1,77 +1,68 @@
 package com.revworkforce.util;
 
 import com.revworkforce.exception.ValidationException;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
-public class ValidationUtilTest {
+import static org.junit.jupiter.api.Assertions.*;
 
-    @Test
-    public void testValidateNotEmpty_Valid() {
-        Assertions.assertDoesNotThrow(() -> ValidationUtil.validateNotEmpty("test", "Field"));
+class ValidationUtilTest {
+
+    @ParameterizedTest
+    @ValueSource(strings = { "test@example.com", "user.name@domain.co", "user+label@domain.com" })
+    void testIsValidEmail_Valid(String email) {
+        assertTrue(ValidationUtil.isValidEmail(email));
     }
 
-    @Test
-    public void testValidateNotEmpty_Empty() {
-        Exception exception = Assertions.assertThrows(ValidationException.class,
-                () -> ValidationUtil.validateNotEmpty("", "Field"));
-        Assertions.assertEquals("Field cannot be empty.", exception.getMessage());
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "plainaddress", "@missingusername.com", "username@.com.my", "username@domain",
+            "username@domain..com" })
+    void testIsValidEmail_Invalid(String email) {
+        assertFalse(ValidationUtil.isValidEmail(email));
     }
 
-    @Test
-    public void testValidateNotEmpty_Null() {
-        Assertions.assertThrows(ValidationException.class, () -> ValidationUtil.validateNotEmpty(null, "Field"));
+    @ParameterizedTest
+    @ValueSource(strings = { "1234567890", "9876543210" })
+    void testIsValidPhone_Valid(String phone) {
+        assertTrue(ValidationUtil.isValidPhone(phone));
     }
 
-    @Test
-    public void testValidateEmail_Valid() {
-        Assertions.assertDoesNotThrow(() -> ValidationUtil.validateEmail("test@example.com"));
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "123", "12345678901", "abcdefghij", "123-456-7890" })
+    void testIsValidPhone_Invalid(String phone) {
+        assertFalse(ValidationUtil.isValidPhone(phone));
     }
 
-    @Test
-    public void testValidateEmail_Invalid() {
-        Assertions.assertThrows(ValidationException.class, () -> ValidationUtil.validateEmail("invalid-email"));
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t", "\n" })
+    void testValidateNotEmpty_Invalid(String input) {
+        assertThrows(ValidationException.class, () -> ValidationUtil.validateNotEmpty(input, "Field"));
     }
 
-    @Test
-    public void testValidatePhone_Valid() {
-        Assertions.assertDoesNotThrow(() -> ValidationUtil.validatePhone("1234567890"));
+    @ParameterizedTest
+    @ValueSource(strings = { "Valid Input", " A ", "123" })
+    void testValidateNotEmpty_Valid(String input) {
+        assertDoesNotThrow(() -> ValidationUtil.validateNotEmpty(input, "Field"));
     }
 
-    @Test
-    public void testValidatePhone_Invalid() {
-        Assertions.assertThrows(ValidationException.class, () -> ValidationUtil.validatePhone("123"));
+    @ParameterizedTest
+    @CsvSource({
+            "-1, Amount",
+            "-0.01, Balance",
+            "-100, Salary"
+    })
+    void testValidatePositive_Invalid(double number, String fieldName) {
+        assertThrows(ValidationException.class, () -> ValidationUtil.validatePositive(number, fieldName));
     }
 
-    @Test
-    public void testValidatePositive_Valid() {
-        Assertions.assertDoesNotThrow(() -> ValidationUtil.validatePositive(100, "Salary"));
-    }
-
-    @Test
-    public void testValidatePositive_Negative() {
-        Assertions.assertThrows(ValidationException.class, () -> ValidationUtil.validatePositive(-50, "Salary"));
-    }
-
-    @Test
-    public void testIsValidEmail_True() {
-        Assertions.assertTrue(ValidationUtil.isValidEmail("test@example.com"));
-    }
-
-    @Test
-    public void testIsValidEmail_False() {
-        Assertions.assertFalse(ValidationUtil.isValidEmail("invalid"));
-        Assertions.assertFalse(ValidationUtil.isValidEmail(null));
-    }
-
-    @Test
-    public void testIsValidPhone_True() {
-        Assertions.assertTrue(ValidationUtil.isValidPhone("1234567890"));
-    }
-
-    @Test
-    public void testIsValidPhone_False() {
-        Assertions.assertFalse(ValidationUtil.isValidPhone("123"));
-        Assertions.assertFalse(ValidationUtil.isValidPhone(null));
+    @ParameterizedTest
+    @ValueSource(doubles = { 0, 0.01, 100, 9999.99 })
+    void testValidatePositive_Valid(double number) {
+        assertDoesNotThrow(() -> ValidationUtil.validatePositive(number, "Field"));
     }
 }

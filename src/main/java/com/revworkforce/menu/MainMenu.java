@@ -65,6 +65,9 @@ public class MainMenu {
                         default -> System.out.println("Error: No valid menu for role: " + role);
                     }
                 } catch (Exception e) {
+                    if ("Stop Loop".equals(e.getMessage())) {
+                        throw (RuntimeException) e;
+                    }
                     System.out.println("Error fetching user role: " + e.getMessage());
                 }
             }

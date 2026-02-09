@@ -1,8 +1,14 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.service;
 
 import com.revworkforce.dao.AnnouncementDAO;
 import com.revworkforce.dao.EmployeeDAO;
 import com.revworkforce.util.InputUtil;
+import com.revworkforce.util.MessageConstants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.ResultSet;
 
@@ -10,11 +16,15 @@ import java.sql.ResultSet;
  * Service class for Employee-related operations.
  * Handles profile viewing, updates, directory search, and miscellaneous
  * employee features.
+ * 
+ * @author Gururaj Shetty
  */
 public class EmployeeService {
 
-    private static final EmployeeDAO employeeDAO = new EmployeeDAO();
-    private static final AnnouncementDAO announcementDAO = new AnnouncementDAO();
+    private static final Logger logger = LogManager.getLogger(EmployeeService.class);
+
+    private static EmployeeDAO employeeDAO = new EmployeeDAO();
+    private static AnnouncementDAO announcementDAO = new AnnouncementDAO();
 
     /**
      * Displays the full profile of an employee.
@@ -37,7 +47,7 @@ public class EmployeeService {
                 System.out.println("Employee not found.");
             }
         } catch (Exception e) {
-            System.err.println("Error fetching profile: " + e.getMessage());
+            logger.error("Error fetching profile: " + e.getMessage(), e);
         }
     }
 
@@ -84,14 +94,15 @@ public class EmployeeService {
 
             System.out.println("Profile updated successfully");
         } catch (Exception e) {
-            System.err.println("Profile update failed: " + e.getMessage());
+            logger.error("Profile update failed: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Prompts the user to change their password.
+     * Prompts the user to change their password securely.
+     * Requires current password verification before allowing the update.
      *
-     * @param empId The employee ID.
+     * @param empId The employee ID of the user changing the password.
      */
     public static void changePassword(String empId) {
         try {
@@ -121,7 +132,7 @@ public class EmployeeService {
             }
 
         } catch (Exception e) {
-            System.err.println("Password change failed: " + e.getMessage());
+            logger.error("Password change failed: " + e.getMessage(), e);
         }
     }
 
@@ -156,12 +167,13 @@ public class EmployeeService {
             }
 
         } catch (Exception e) {
-            System.err.println("Error fetching manager details: " + e.getMessage());
+            logger.error("Error fetching manager details: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Displays upcoming birthdays of colleagues.
+     * Displays upcoming birthdays of colleagues within the next 30 days.
+     * Helps in fostering team morale and engagement.
      */
     public static void viewUpcomingBirthdays() {
         try {
@@ -180,7 +192,7 @@ public class EmployeeService {
                 System.out.println("No upcoming birthdays.");
 
         } catch (Exception e) {
-            System.err.println("Unable to fetch birthdays: " + e.getMessage());
+            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "birthdays: " + e.getMessage(), e);
         }
     }
 
@@ -203,12 +215,12 @@ public class EmployeeService {
                 System.out.println("No upcoming anniversaries.");
 
         } catch (Exception e) {
-            System.err.println("Unable to fetch anniversaries: " + e.getMessage());
+            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "anniversaries: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Displays company announcements.
+     * Displays general company announcements sorted by date.
      */
     public static void viewAnnouncements() {
         try {
@@ -227,12 +239,13 @@ public class EmployeeService {
                 System.out.println("No announcements.");
 
         } catch (Exception e) {
-            System.err.println("Unable to fetch announcements: " + e.getMessage());
+            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "announcements: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Searches for employees by name or ID.
+     * Searches for employees in the directory by name, ID, or email.
+     * Displays a tabulated list of matching results.
      */
     public static void employeeDirectory() {
         String keyword = InputUtil.readString("Search by name, ID, or email: ");
@@ -261,7 +274,7 @@ public class EmployeeService {
                 System.out.println("No employees found matching: " + keyword);
 
         } catch (Exception e) {
-            System.err.println("Search failed: " + e.getMessage());
+            logger.error("Search failed: " + e.getMessage(), e);
         }
     }
 }

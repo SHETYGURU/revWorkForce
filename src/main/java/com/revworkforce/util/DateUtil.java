@@ -1,3 +1,6 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.util;
 
 import java.sql.Date;
@@ -9,8 +12,15 @@ import java.time.format.DateTimeParseException;
 
 /**
  * Utility class for Date and Time operations.
+ * Handles format conversion between SQL Date/Timestamp and Local Date/DateTime.
+ * 
+ * @author Gururaj Shetty
  */
 public class DateUtil {
+
+    private DateUtil() {
+        // Private constructor to prevent instantiation
+    }
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -24,12 +34,14 @@ public class DateUtil {
     }
 
     public static String formatDate(Date date) {
-        if (date == null) return "N/A";
+        if (date == null)
+            return "N/A";
         return date.toLocalDate().format(DATE_FMT);
     }
 
     public static String formatTimestamp(Timestamp ts) {
-        if (ts == null) return "N/A";
+        if (ts == null)
+            return "N/A";
         return ts.toLocalDateTime().format(DATETIME_FMT);
     }
 

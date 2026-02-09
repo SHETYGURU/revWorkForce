@@ -1,3 +1,6 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.dao;
 
 import com.revworkforce.util.DBConnection;
@@ -7,6 +10,12 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+/**
+ * DAO for Performance Reviews and Goals.
+ * Handles tracking of goals, feedback submission, and review cycles.
+ * 
+ * @author Gururaj Shetty
+ */
 public class PerformanceDAO {
 
     public ResultSet getTeamGoals(String managerId) throws Exception {
@@ -29,6 +38,13 @@ public class PerformanceDAO {
         return ps.executeQuery();
     }
 
+    /**
+     * Aggregates goal completion statistics for a manager's team.
+     * 
+     * @param managerId Manager's Employee ID.
+     * @return ResultSet with total vs completed goals per employee.
+     * @throws Exception if query fails.
+     */
     public ResultSet getGoalCompletionSummary(String managerId) throws Exception {
         String sql = """
                     SELECT e.employee_id,
@@ -75,6 +91,16 @@ public class PerformanceDAO {
         }
     }
 
+    /**
+     * Creates a new performance goal for an employee.
+     * 
+     * @param empId    Employee ID.
+     * @param desc     Goal description.
+     * @param deadline Target date.
+     * @param priority Priority level (High, Medium, Low).
+     * @param metrics  Success criteria.
+     * @throws Exception if insertion fails.
+     */
     public void createGoal(
             String empId,
             String desc,

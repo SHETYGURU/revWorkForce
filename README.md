@@ -20,16 +20,18 @@
 
 RevWorkForce follows a layered architecture pattern to ensure separation of concerns, maintainability, and scalability.
 
+For a detailed breakdown of class roles, responsibilities, and interaction flows, please refer to the **[Detailed Architecture Documentation](detailed_architecture.md)** and **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
 ```mermaid
 graph TD
-    User((User)) -->|Interacts| UI[Console Menus (com.revworkforce.menu)]
-    UI -->|Calls| Service[Service Layer (com.revworkforce.service)]
-    Service -->|Validates/Processes| Model[Domain Models (com.revworkforce.model)]
-    Service -->|Invokes| DAO[Data Access Layer (com.revworkforce.dao)]
+    User((User)) -->|Interacts| UI["Console Menus (com.revworkforce.menu)"]
+    UI -->|Calls| Service["Service Layer (com.revworkforce.service)"]
+    Service -->|Validates/Processes| Model["Domain Models (com.revworkforce.model)"]
+    Service -->|Invokes| DAO["Data Access Layer (com.revworkforce.dao)"]
     DAO -->|JDBC| DB[(Oracle Database)]
     
     subgraph Utilities
-    Util[Utils: DBConnection, InputUtil, ValidationUtil]
+    Util["Utils: DBConnection, InputUtil, ValidationUtil"]
     end
     
     Service -.-> Util
@@ -77,11 +79,11 @@ graph TD
 
 ### 5. Communication Hub
 *   **Announcements**: Admin-broadcasted messages visible to all employees.
-*   **Notifications**: Targeted alerts for specific user actions (e.g., "Leave Approved").
+*   **Notifications**: Targeted alerts for specific user actions (e.g., `Leave Approved`).
 
 ---
 
-## � Technology Stack
+## 💻 Technology Stack
 
 | Component | Technology | Version | Description |
 | :--- | :--- | :--- | :--- |
@@ -97,9 +99,11 @@ graph TD
 
 ## 🗄 Database Schema & Design
 
-The database is normalized to 3NF to ensure data integrity.
+The database is normalized to 3NF to ensure data integrity. Validations and relationships are enforced at the database level.
 
-### Key Entity Relationships (ERD Description)
+For a complete Entity Relationship Diagram (ERD) and detailed schema explanation, please refer to **[DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)**.
+
+### Key Entity Relationships
 1.  **Employees ↔ Departments**: Many-to-One. One department has many employees.
 2.  **Employees ↔ Roles**: Many-to-Many (managed via `employee_roles`).
 3.  **Employees ↔ LeaveApplications**: One-to-Many. An employee can have multiple leave requests.
@@ -115,7 +119,9 @@ The database is normalized to 3NF to ensure data integrity.
 
 ## 📱 Application Flow & Navigation
 
-The application uses specific Menu classes to guide users based on their role:
+The application uses specific Menu classes to guide users based on their role.
+
+For comprehensive visualizations of user journeys, including Mermaid sequence diagrams for key processes (Login, Leave Approval, Performance Review, etc.), please refer to **[UseCase_ControlFlow.md](UseCase_ControlFlow.md)**.
 
 ### 1. Main Entry (`MainMenu.java`)
 *   **Login**: Authenticates user credentials.
@@ -142,7 +148,7 @@ The application uses specific Menu classes to guide users based on their role:
 
 ---
 
-## � Security & Compliance
+## 🔐 Security & Compliance
 
 ### Authentication Security
 *   **Hashing**: Passwords are **never** stored in plain text. We use `BCrypt` with salt to hash passwords.
@@ -196,6 +202,8 @@ The application uses specific Menu classes to guide users based on their role:
 
 We use a robust testing strategy combining Unit Tests and Integration Tests.
 
+For a detailed guide on our testing strategy, frameworks used, and how to execute tests, please refer to **[TESTING.md](TESTING.md)**.
+
 ### Running Tests
 To execute the full test suite via Maven:
 ```bash
@@ -209,4 +217,4 @@ mvn test
 
 ---
 
-**© 2024 RevWorkForce Systems. All Rights Reserved.**
+**© 2026 RevWorkForce Systems. All Rights Reserved.**

@@ -1,3 +1,6 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.service;
 
 import com.revworkforce.context.SessionContext;
@@ -11,7 +14,10 @@ import java.sql.ResultSet;
 
 /**
  * Service class for handling Authentication and Security.
- * Manages login, password verification, and account locking mechanisms.
+ * Manages login, password verification, account locking, and session
+ * initialization.
+ * 
+ * @author Gururaj Shetty
  */
 public class AuthService {
 
@@ -59,6 +65,7 @@ public class AuthService {
             Employee emp = dao.getEmployeeById(empId);
             SessionContext.set(emp);
             logger.info("User logged in successfully: {}", empId);
+            AuditService.log(empId, "LOGIN", "SESSION", "N/A", "User logged in successfully");
 
             // Show Unread Notifications
             int unreadCount = NotificationService.getUnreadCount(empId);
@@ -71,7 +78,7 @@ public class AuthService {
             return true;
 
         } catch (Exception e) {
-            System.err.println("System Error during login: " + e.getMessage());
+            logger.error("System Error during login: " + e.getMessage(), e);
             logger.error("System Error during login for user: {}", empId, e);
             return false;
         }
@@ -87,6 +94,7 @@ public class AuthService {
             dao.lockAccount(empId);
             System.out.println("Account locked due to multiple failed attempts.");
             logger.warn("Account locked due to max failed attempts: {}", empId);
+            AuditService.log(empId, "LOCKOUT", "ACCESS_CONTROL", "N/A", "Account locked due to max failed attempts");
         } else {
             System.out.println("Invalid credentials");
             System.out.println("Attempts remaining: " + (MAX_ATTEMPTS - (currentFailures + 1)));
@@ -96,10 +104,11 @@ public class AuthService {
 
     /**
      * Changes the password for a logged-in user.
+     * Enforces security by verifying the old password before allowing a change.
      *
      * @param empId       The employee ID.
-     * @param oldPassword The current password.
-     * @param newPassword The new password.
+     * @param oldPassword The current password provided by the user.
+     * @param newPassword The new password to be set.
      * @return true if change successful, false otherwise.
      */
     public static boolean changePassword(String empId, String oldPassword, String newPassword) {
@@ -124,7 +133,7 @@ public class AuthService {
             }
             return false;
         } catch (Exception e) {
-            System.err.println("Error changing password: " + e.getMessage());
+            logger.error("Error changing password: " + e.getMessage(), e);
             logger.error("Error changing password for user: {}", empId, e);
             return false;
         }
@@ -132,6 +141,7 @@ public class AuthService {
 
     /**
      * Initiates the Forgot Password recovery flow.
+     * prompts for Employee ID and Security Answer to reset the password.
      */
     public static void forgotPasswordFlow() {
         try {
@@ -164,6 +174,8 @@ public class AuthService {
                     dao.updatePassword(empId, newHash);
                     System.out.println("Password reset successfully. Please login.");
                     logger.info("Password recovered/reset successfully for user: {}", empId);
+                    AuditService.log(empId, "RECOVER", "ACCESS_CONTROL", "N/A",
+                            "Password recovered via security question");
                 } else {
                     System.out.println("Incorrect Answer.");
                     logger.warn("Password recovery failed - Incorrect Security Answer: {}", empId);
@@ -175,7 +187,7 @@ public class AuthService {
             }
 
         } catch (Exception e) {
-            System.err.println("Error during password recovery: " + e.getMessage());
+            logger.error("Error during password recovery: " + e.getMessage(), e);
             logger.error("Error during password recovery flow", e);
         }
     }

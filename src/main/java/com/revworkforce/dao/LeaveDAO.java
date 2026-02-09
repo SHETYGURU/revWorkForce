@@ -1,9 +1,18 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.dao;
 
 import com.revworkforce.util.DBConnection;
 
 import java.sql.*;
 
+/**
+ * DAO for Leave Management.
+ * Handles leave applications, balance tracking, and approval workflow updates.
+ * 
+ * @author Gururaj Shetty
+ */
 public class LeaveDAO {
 
     public ResultSet getLeaveBalances(String empId) throws Exception {
@@ -21,6 +30,13 @@ public class LeaveDAO {
         return ps.executeQuery();
     }
 
+    /**
+     * Retrieves pending leave requests for a manager's team.
+     * 
+     * @param managerId The Manager's Employee ID.
+     * @return ResultSet of pending leaves.
+     * @throws Exception if query fails.
+     */
     public ResultSet getTeamLeaveRequests(String managerId) throws Exception {
 
         String sql = """
@@ -46,6 +62,16 @@ public class LeaveDAO {
         return ps.executeQuery();
     }
 
+    /**
+     * Updates the status of a leave application (e.g., APPROVED, REJECTED).
+     * Records the reviewer and comments.
+     * 
+     * @param leaveId   The Leave Application ID.
+     * @param managerId The Reviewer's ID.
+     * @param status    The new status.
+     * @param comments  Optional comments.
+     * @throws Exception if update fails.
+     */
     public void updateLeaveStatus(
             int leaveId,
             String managerId,
@@ -226,6 +252,17 @@ public class LeaveDAO {
         return ps.executeQuery();
     }
 
+    /**
+     * Assigns or updates the leave quota for an employee for a specific year.
+     * If a record exists, it updates the total allocated; otherwise, it inserts a
+     * new record.
+     * 
+     * @param empId       Employee ID.
+     * @param leaveTypeId Leave Type ID.
+     * @param year        The Year (e.g., 2024).
+     * @param total       Total days allocated.
+     * @throws Exception if database operation fails.
+     */
     public void assignLeaveQuota(
             String empId,
             int leaveTypeId,

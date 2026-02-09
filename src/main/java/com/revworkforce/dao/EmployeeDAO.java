@@ -1,7 +1,12 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.dao;
 
 import com.revworkforce.model.Employee;
 import com.revworkforce.util.DBConnection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,8 +14,13 @@ import java.sql.ResultSet;
 
 /**
  * Data Access Object for Employee-related database operations.
+ * Handles CRUD operations, profile retrieval, and team management queries.
+ * 
+ * @author Gururaj Shetty
  */
 public class EmployeeDAO {
+
+    private static final Logger logger = LogManager.getLogger(EmployeeDAO.class);
 
     public Employee getEmployeeById(String empId) throws Exception {
         String sql = "SELECT * FROM employees WHERE employee_id = ?";
@@ -47,6 +57,14 @@ public class EmployeeDAO {
         return ps.executeQuery();
     }
 
+    /**
+     * Retrieves a list of employees reporting to a specific manager.
+     * Includes department and designation details for display.
+     *
+     * @param managerId The Manager's Employee ID.
+     * @return ResultSet containing reportee details.
+     * @throws Exception if a database access error occurs.
+     */
     public ResultSet getReportees(String managerId) throws Exception {
         String sql = """
                     SELECT e.employee_id, e.first_name, e.last_name, e.email,
@@ -76,6 +94,15 @@ public class EmployeeDAO {
         }
     }
 
+    /**
+     * Updates an employee's personal contact information.
+     *
+     * @param empId     The Employee ID.
+     * @param phone     New phone number.
+     * @param address   New address.
+     * @param emergency New emergency contact.
+     * @throws Exception if update fails.
+     */
     public void updateProfile(String empId, String phone, String address, String emergency) throws Exception {
         String sql = """
                     UPDATE employees
@@ -167,6 +194,15 @@ public class EmployeeDAO {
         return ps.executeQuery();
     }
 
+    /**
+     * Searches for employees matching a keyword across multiple fields (Name, ID,
+     * Email, Dept, Desig).
+     * Uses LIKE operators for flexible matching.
+     *
+     * @param keyword The search term.
+     * @return ResultSet containing matching employee records.
+     * @throws Exception if query fails.
+     */
     public ResultSet searchEmployees(String keyword) throws Exception {
         String sql = """
                     SELECT e.employee_id, e.first_name, e.last_name, e.email,
@@ -239,37 +275,44 @@ public class EmployeeDAO {
         }
     }
 
-    public void insertEmployee(String id, String firstName, String lastName, String email,
-            String phone, String address, String emergencyContact, String dob,
-            String dept, String desig,
-            String manager, double salary, String joiningDate, String passwordHash) throws Exception {
-
+    public void insertEmployee(Employee emp) throws Exception {
         String sql = """
                     INSERT INTO employees
                     (employee_id, first_name, last_name, email, phone, address, emergency_contact,
                      date_of_birth, department_id, designation_id,
                      manager_id, salary, password_hash, is_active, joining_date)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, TO_DATE(?,'YYYY-MM-DD'),
-                            ?, ?, ?, ?, ?, 1, TO_DATE(?,'YYYY-MM-DD'))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
                 """;
 
         try (Connection con = DBConnection.getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, id);
-            ps.setString(2, firstName);
-            ps.setString(3, lastName);
-            ps.setString(4, email);
-            ps.setString(5, phone);
-            ps.setString(6, address);
-            ps.setString(7, emergencyContact);
-            ps.setString(8, dob);
-            ps.setString(9, dept);
-            ps.setString(10, desig);
-            ps.setString(11, manager);
-            ps.setDouble(12, salary);
-            ps.setString(13, passwordHash);
-            ps.setString(14, joiningDate);
+            ps.setString(1, emp.getEmployeeId());
+            ps.setString(2, emp.getFirstName());
+            ps.setString(3, emp.getLastName());
+            ps.setString(4, emp.getEmail());
+            ps.setString(5, emp.getPhone());
+            ps.setString(6, emp.getAddress());
+            ps.setString(7, emp.getEmergencyContact());
+            ps.setDate(8, emp.getDateOfBirth());
+
+            if (emp.getDepartmentId() != null)
+                ps.setInt(9, emp.getDepartmentId());
+            else
+                ps.setNull(9, java.sql.Types.INTEGER);
+            if (emp.getDesignationId() != null)
+                ps.setInt(10, emp.getDesignationId());
+            else
+                ps.setNull(10, java.sql.Types.INTEGER);
+
+            ps.setString(11, emp.getManagerId());
+            if (emp.getSalary() != null)
+                ps.setDouble(12, emp.getSalary());
+            else
+                ps.setNull(12, java.sql.Types.DOUBLE);
+            ps.setString(13, emp.getPasswordHash());
+            ps.setDate(14, emp.getJoiningDate());
+
             ps.executeUpdate();
         }
     }
@@ -320,6 +363,13 @@ public class EmployeeDAO {
         }
     }
 
+    /**
+     * Locks an employee's account to prevent further login attempts.
+     * Typically reused after excessive failed login attempts.
+     *
+     * @param empId The Employee ID.
+     * @throws Exception if update fails.
+     */
     public void lockAccount(String empId) throws Exception {
         String sql = "UPDATE employees SET account_locked = 1 WHERE employee_id = ?";
         try (Connection con = DBConnection.getConnection();
@@ -392,7 +442,7 @@ public class EmployeeDAO {
                                 (rs.getInt("is_active") == 1 ? "Yes" : "No"));
             }
         } catch (Exception e) {
-            System.err.println("Error listing employees: " + e.getMessage());
+            logger.error("Error listing employees: " + e.getMessage(), e);
         }
     }
 }

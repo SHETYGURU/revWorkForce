@@ -41,3 +41,15 @@ build/
 ### Compiled Class Files ###
 *.class
 bin/
+
+### Application Specific ###
+logs/
+*.log
+hs_err_pid*
+replay_pid*
+.dist/
+.idea/
+*.ppt
+*.pptx
+*.vba
+*.ps1

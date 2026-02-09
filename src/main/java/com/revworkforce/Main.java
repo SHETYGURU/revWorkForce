@@ -2,10 +2,14 @@ package com.revworkforce;
 
 import com.revworkforce.menu.MainMenu;
 import com.revworkforce.util.DBConnection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 
 public class Main {
+
+    private static final Logger logger = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) {
 
@@ -14,7 +18,7 @@ public class Main {
         System.out.println("====================================");
 
         try (Connection con = DBConnection.getConnection()) {
-            System.out.println("Database connection established");
+            logger.info("Database connection established");
 
             // AUTO-FIX: Reset Passwords for ALL test users
             String newHash = com.revworkforce.util.PasswordUtil.hashPassword("password");
@@ -27,7 +31,7 @@ public class Main {
 
         } catch (Exception e) {
             System.err.println("FATAL: Database unavailable");
-            e.printStackTrace();
+            logger.fatal("Application failed to start", e);
             return;
         }
 

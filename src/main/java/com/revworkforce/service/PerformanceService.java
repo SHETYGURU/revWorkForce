@@ -1,14 +1,33 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.service;
 
 import com.revworkforce.dao.PerformanceDAO;
 import com.revworkforce.util.InputUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.ResultSet;
 
+/**
+ * Service class for Performance Management.
+ * Handles performance reviews, goal setting, and feedback retrieval.
+ * 
+ * @author Gururaj Shetty
+ */
 public class PerformanceService {
 
-    private static final PerformanceDAO dao = new PerformanceDAO();
+    private static final Logger logger = LogManager.getLogger(PerformanceService.class);
 
+    private static PerformanceDAO dao = new PerformanceDAO();
+
+    /**
+     * Allows a manager to view performance reviews of their team.
+     * Can also process a specific review (Add Feedback/Rating).
+     * 
+     * @param managerId The Manager's Employee ID.
+     */
     public static void reviewTeam(String managerId) {
 
         try {
@@ -19,8 +38,7 @@ public class PerformanceService {
                 System.out.println(
                         rs.getInt("review_id") +
                                 " | " + rs.getString("employee_id") +
-                                " | Status: " + rs.getString("status")
-                );
+                                " | Status: " + rs.getString("status"));
             }
 
             int reviewId = InputUtil.readInt("Review ID to process: ");
@@ -34,15 +52,21 @@ public class PerformanceService {
                     "REVIEW",
                     "PERFORMANCE_REVIEWS",
                     String.valueOf(reviewId),
-                    "Performance reviewed"
-            );
+                    "Performance reviewed");
 
             System.out.println("Performance reviewed successfully");
 
         } catch (Exception e) {
-            System.err.println("Performance review failed");
+            logger.error("Performance review failed: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Allows an employee to submit their self-review.
+     * Captures key deliverables, accomplishments, and areas of improvement.
+     * 
+     * @param empId The Employee ID.
+     */
     public static void submitSelfReview(String empId) {
 
         try {
@@ -51,8 +75,7 @@ public class PerformanceService {
             String acc = InputUtil.readString("Major Accomplishments: ");
             String imp = InputUtil.readString("Areas of Improvement: ");
             double rating = Double.parseDouble(
-                    InputUtil.readString("Self Rating (1–5): ")
-            );
+                    InputUtil.readString("Self Rating (1–5): "));
 
             dao.submitSelfReview(empId, cycleId, del, acc, imp, rating);
 
@@ -60,15 +83,21 @@ public class PerformanceService {
                     empId, "SUBMIT",
                     "PERFORMANCE_REVIEWS",
                     "NEW",
-                    "Self review submitted"
-            );
+                    "Self review submitted");
 
             System.out.println("Performance review submitted");
 
         } catch (Exception e) {
-            System.err.println("Submission failed");
+            logger.error("Submission failed: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Allows an employee to view and manage their goals.
+     * Enables updating progress on assigned goals.
+     * 
+     * @param empId The Employee ID.
+     */
     public static void manageGoals(String empId) {
 
         try {
@@ -80,8 +109,7 @@ public class PerformanceService {
                         rs.getInt("goal_id") + " | " +
                                 rs.getString("goal_description") +
                                 " | Progress: " +
-                                rs.getInt("progress_percentage") + "%"
-                );
+                                rs.getInt("progress_percentage") + "%");
             }
 
             int goalId = InputUtil.readInt("Goal ID to update: ");
@@ -93,15 +121,20 @@ public class PerformanceService {
                     empId, "UPDATE",
                     "GOALS",
                     String.valueOf(goalId),
-                    "Goal progress updated"
-            );
+                    "Goal progress updated");
 
             System.out.println("Goal updated");
 
         } catch (Exception e) {
-            System.err.println("Goal operation failed");
+            logger.error("Goal operation failed: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Displays feedback provided by the manager.
+     * 
+     * @param empId The Employee ID.
+     */
     public static void viewManagerFeedback(String empId) {
 
         try {
@@ -111,11 +144,10 @@ public class PerformanceService {
             while (rs.next()) {
                 System.out.println(
                         "Rating: " + rs.getInt("manager_rating") +
-                                " | Feedback: " + rs.getString("manager_feedback")
-                );
+                                " | Feedback: " + rs.getString("manager_feedback"));
             }
         } catch (Exception e) {
-            System.err.println("No feedback available");
+            logger.error("No feedback available: " + e.getMessage(), e);
         }
     }
 

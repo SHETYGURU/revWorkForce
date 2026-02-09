@@ -1,7 +1,12 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.dao;
 
 import com.revworkforce.exception.AppException;
 import com.revworkforce.util.DBConnection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,7 +16,16 @@ import java.sql.ResultSet;
  * Data Access Object for Notification management.
  * Handles fetching unread counts and retrieving/marking notifications.
  */
+/**
+ * Data Access Object for Notification management.
+ * Handles fetching unread counts, retrieving notifications, and marking them as
+ * read.
+ * 
+ * @author Gururaj Shetty
+ */
 public class NotificationDAO {
+
+    private static final Logger logger = LogManager.getLogger(NotificationDAO.class);
 
     // SQL Queries
     private static final String SQL_GET_UNREAD_COUNT = """
@@ -41,11 +55,11 @@ public class NotificationDAO {
             """;
 
     /**
-     * Creates a new notification.
+     * Creates a new notification record for an employee.
      * 
-     * @param empId   The employee ID.
-     * @param type    The notification type.
-     * @param message The notification message.
+     * @param empId   The target Employee ID.
+     * @param type    The notification category (e.g., LEAVE_APPROVED).
+     * @param message The content to display.
      */
     public void createNotification(String empId, String type, String message) {
         try (Connection con = DBConnection.getConnection();
@@ -55,7 +69,7 @@ public class NotificationDAO {
             ps.setString(3, message);
             ps.executeUpdate();
         } catch (Exception e) {
-            System.err.println("Error creating notification: " + e.getMessage());
+            logger.error("Error creating notification: " + e.getMessage(), e);
         }
     }
 
@@ -77,7 +91,7 @@ public class NotificationDAO {
             }
         } catch (Exception e) {
             // Log error internally but return 0 to avoid breaking UI
-            System.err.println("Error fetching notification count: " + e.getMessage());
+            logger.error("Error fetching notification count: " + e.getMessage(), e);
         }
         return 0;
     }

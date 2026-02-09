@@ -1,3 +1,6 @@
+/*
+ * Developed by Gururaj Shetty
+ */
 package com.revworkforce.util;
 
 import com.revworkforce.exception.ValidationException;
@@ -6,12 +9,27 @@ import java.util.regex.Pattern;
 
 /**
  * Utility class for Input Validations.
+ * Provides static methods to validate emails, phone numbers, and required
+ * fields.
+ * 
+ * @author Gururaj Shetty
  */
 public class ValidationUtil {
 
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
+    private ValidationUtil() {
+        // Private constructor to prevent instantiation
+    }
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2,}$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^\\d{10}$");
 
+    /**
+     * Validates that a string input is not null or empty.
+     * 
+     * @param input     The input string.
+     * @param fieldName The name of the field for error reporting.
+     * @throws ValidationException if input is invalid.
+     */
     public static void validateNotEmpty(String input, String fieldName) {
         if (input == null || input.trim().isEmpty()) {
             throw new ValidationException(fieldName + " cannot be empty.");

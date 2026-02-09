@@ -1,85 +1,183 @@
 package com.revworkforce.service;
 
 import com.revworkforce.dao.EmployeeDAO;
+import com.revworkforce.model.Employee;
+import com.revworkforce.util.InputUtil;
 import com.revworkforce.util.PasswordUtil;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.MockedStatic;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-public class AuthServiceTest {
+class AuthServiceTest {
 
     private EmployeeDAO mockDao;
+    private MockedStatic<InputUtil> mockInputUtil;
+
+    // We don't mock PasswordUtil static methods directly because BCrypt is complex
+    // Instead we rely on real PasswordUtil but mock the DB hash return
 
     @BeforeEach
-    public void setUp() throws Exception {
-        mockDao = Mockito.mock(EmployeeDAO.class);
+    void setUp() throws Exception {
+        mockDao = mock(EmployeeDAO.class);
         setPrivateStaticField(AuthService.class, "dao", mockDao);
+        mockInputUtil = mockStatic(InputUtil.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        mockInputUtil.close();
     }
 
     private void setPrivateStaticField(Class<?> clazz, String fieldName, Object value) throws Exception {
         Field field = clazz.getDeclaredField(fieldName);
         field.setAccessible(true);
-        // Remove final modifier if necessary (mostly not needed for simple unit tests
-        // but good practice if fails)
-        // Note: In modern Java, modifying static final fields via reflection can be
-        // tricky,
-        // but often works for testing if SecurityManager allows.
         field.set(null, value);
     }
 
     @Test
-    public void testLogin_Success() throws Exception {
-        // Mock ResultSet behavior
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockDao.getAuthDetails("E001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true);
-        when(mockRs.getInt("account_locked")).thenReturn(0);
-        // "password" hashes to... well we need to mock verifyPassword or use real hash
-        // It's better to mock PasswordUtil too if possible, but it's static.
-        // For simplicity, let's assume we use the real PasswordUtil and just put a
-        // valid hash in the mock RS.
-        String correctHash = PasswordUtil.hashPassword("password");
-        when(mockRs.getString("password_hash")).thenReturn(correctHash);
-        when(mockRs.getInt("failed_login_attempts")).thenReturn(0);
+    void testLogin_Success() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getInt("account_locked")).thenReturn(0);
 
-        when(mockDao.getEmployeeById("E001")).thenReturn(new com.revworkforce.model.Employee());
+        // Generate a real hash for "password" to make PasswordUtil.verifyPass work
+        String realHash = PasswordUtil.hashPassword("password");
+        when(rs.getString("password_hash")).thenReturn(realHash);
 
-        boolean result = AuthService.login("E001", "password");
-        Assertions.assertTrue(result);
+        when(mockDao.getEmployeeById("EMP001")).thenReturn(new Employee());
 
-        verify(mockDao).recordSuccessfulLogin("E001");
+        boolean result = AuthService.login("EMP001", "password");
+
+        assertTrue(result);
+        verify(mockDao).recordSuccessfulLogin("EMP001");
     }
 
     @Test
-    public void testLogin_Failure_WrongPassword() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockDao.getAuthDetails("E001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true);
-        when(mockRs.getInt("account_locked")).thenReturn(0);
-        String correctHash = PasswordUtil.hashPassword("password");
-        when(mockRs.getString("password_hash")).thenReturn(correctHash);
+    void testLogin_Failure_WrongPassword() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getInt("account_locked")).thenReturn(0);
 
-        boolean result = AuthService.login("E001", "wrongpass");
-        Assertions.assertFalse(result);
+        String realHash = PasswordUtil.hashPassword("password");
+        when(rs.getString("password_hash")).thenReturn(realHash);
 
-        verify(mockDao).recordFailedLogin("E001");
+        boolean result = AuthService.login("EMP001", "wrongpass");
+
+        assertFalse(result);
+        verify(mockDao).recordFailedLogin("EMP001");
     }
 
     @Test
-    public void testLogin_AccountLocked() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockDao.getAuthDetails("E001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true);
-        when(mockRs.getInt("account_locked")).thenReturn(1);
+    void testChangePassword_Failure_DBError() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
 
-        boolean result = AuthService.login("E001", "password");
-        Assertions.assertFalse(result);
+        String oldHash = PasswordUtil.hashPassword("oldPass");
+        when(rs.getString("password_hash")).thenReturn(oldHash);
+
+        when(mockDao.updatePassword(eq("EMP001"), anyString())).thenThrow(new RuntimeException("DB Error"));
+
+        boolean result = AuthService.changePassword("EMP001", "oldPass", "newPass");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testChangePassword_Success() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+
+        String oldHash = PasswordUtil.hashPassword("oldPass");
+        when(rs.getString("password_hash")).thenReturn(oldHash);
+
+        boolean result = AuthService.changePassword("EMP001", "oldPass", "newPass");
+
+        assertTrue(result);
+        verify(mockDao).updatePassword(eq("EMP001"), anyString());
+    }
+
+    @Test
+    void testLogin_UserNotFound() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(false);
+
+        boolean result = AuthService.login("EMP001", "password");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testLogin_AccountLocked() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getInt("account_locked")).thenReturn(1);
+
+        boolean result = AuthService.login("EMP001", "password");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testForgotPasswordFlow_Success() throws Exception {
+        mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
+
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getSecurityDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getString("question_text")).thenReturn("Pet Name?");
+        when(rs.getString("answer_hash")).thenReturn(PasswordUtil.hashPassword("Fluffy"));
+
+        mockInputUtil.when(() -> InputUtil.readString(contains("Answer"))).thenReturn("Fluffy");
+        mockInputUtil.when(() -> InputUtil.readString(contains("New Password"))).thenReturn("newPass");
+        mockInputUtil.when(() -> InputUtil.readString(contains("Confirm New Password"))).thenReturn("newPass");
+
+        AuthService.forgotPasswordFlow();
+
+        verify(mockDao).updatePassword(eq("EMP001"), anyString());
+    }
+
+    @Test
+    void testChangePassword_UserNotFound() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(false);
+
+        boolean result = AuthService.changePassword("EMP001", "oldPass", "newPass");
+
+        assertFalse(result);
+        verify(mockDao, never()).updatePassword(anyString(), anyString());
+    }
+
+    @Test
+    void testLogin_FailedAttempts_Lockout() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(mockDao.getAuthDetails("EMP001")).thenReturn(rs);
+        when(rs.next()).thenReturn(true);
+        when(rs.getInt("account_locked")).thenReturn(0);
+        when(rs.getInt("failed_login_attempts")).thenReturn(2); // On 3rd attempt
+
+        String realHash = PasswordUtil.hashPassword("password");
+        when(rs.getString("password_hash")).thenReturn(realHash);
+
+        boolean result = AuthService.login("EMP001", "wrongpass");
+
+        assertFalse(result);
+        verify(mockDao).recordFailedLogin("EMP001");
+        verify(mockDao).lockAccount("EMP001");
     }
 }

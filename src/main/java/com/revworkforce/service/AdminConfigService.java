@@ -7,16 +7,16 @@ import java.sql.Date;
 
 public class AdminConfigService {
 
-    private static final DepartmentDAO departmentDAO = new DepartmentDAO();
-    private static final DesignationDAO designationDAO = new DesignationDAO();
-    private static final PerformanceCycleDAO cycleDAO = new PerformanceCycleDAO();
-    private static final SystemPolicyDAO policyDAO = new SystemPolicyDAO();
-    private static final HolidayDAO holidayDAO = new HolidayDAO();
+    private static DepartmentDAO departmentDAO = new DepartmentDAO();
+    private static DesignationDAO designationDAO = new DesignationDAO();
+    private static PerformanceCycleDAO cycleDAO = new PerformanceCycleDAO();
+    private static SystemPolicyDAO policyDAO = new SystemPolicyDAO();
+    private static HolidayDAO holidayDAO = new HolidayDAO();
 
     private static String getAdminId() {
-        return com.revworkforce.context.SessionContext.get() != null 
-               ? com.revworkforce.context.SessionContext.get().getEmployeeId() 
-               : "ADMIN001"; // Fallback
+        return com.revworkforce.context.SessionContext.get() != null
+                ? com.revworkforce.context.SessionContext.get().getEmployeeId()
+                : "ADMIN001"; // Fallback
     }
 
     public static void manageDepartments() {
@@ -27,9 +27,9 @@ public class AdminConfigService {
             System.out.println("3. Update Department");
             System.out.println("4. Delete Department");
             System.out.println("5. Back");
-            
+
             int choice = InputUtil.readInt("Select Option: ");
-            
+
             try {
                 switch (choice) {
                     case 1 -> {
@@ -41,16 +41,15 @@ public class AdminConfigService {
                     case 2 -> {
                         System.out.println("\n--- ALL DEPARTMENTS ---");
                         try (java.sql.ResultSet rs = departmentDAO.getAllDepartments();
-                             java.sql.Statement stmt = rs.getStatement();
-                             java.sql.Connection con = stmt.getConnection()) {
-                             
+                                java.sql.Statement stmt = rs.getStatement();
+                                java.sql.Connection con = stmt.getConnection()) {
+
                             System.out.printf("%-15s %-30s%n", "ID", "NAME");
                             System.out.println("---------------------------------------------");
                             while (rs.next()) {
-                                System.out.printf("%-15s %-30s%n", 
-                                    rs.getString("department_id"), 
-                                    rs.getString("department_name")
-                                );
+                                System.out.printf("%-15s %-30s%n",
+                                        rs.getString("department_id"),
+                                        rs.getString("department_name"));
                             }
                         }
                     }
@@ -58,7 +57,8 @@ public class AdminConfigService {
                         String id = InputUtil.readString("Department ID to Update: ");
                         String name = InputUtil.readString("New Department Name: ");
                         departmentDAO.updateDepartment(id, name);
-                        AuditService.log(getAdminId(), "UPDATE", "DEPARTMENTS", "Name", id, "Department name changed to " + name);
+                        AuditService.log(getAdminId(), "UPDATE", "DEPARTMENTS", "Name", id,
+                                "Department name changed to " + name);
                         System.out.println("Department updated successfully.");
                     }
                     case 4 -> {
@@ -67,7 +67,9 @@ public class AdminConfigService {
                         AuditService.log(getAdminId(), "DELETE", "DEPARTMENTS", "All", id, "Department deleted");
                         System.out.println("Department deleted successfully.");
                     }
-                    case 5 -> { return; }
+                    case 5 -> {
+                        return;
+                    }
                     default -> System.out.println("Invalid option.");
                 }
             } catch (Exception e) {
@@ -99,16 +101,15 @@ public class AdminConfigService {
                     case 2 -> {
                         System.out.println("\n--- ALL DESIGNATIONS ---");
                         try (java.sql.ResultSet rs = designationDAO.getAllDesignations();
-                             java.sql.Statement stmt = rs.getStatement();
-                             java.sql.Connection con = stmt.getConnection()) {
-                             
+                                java.sql.Statement stmt = rs.getStatement();
+                                java.sql.Connection con = stmt.getConnection()) {
+
                             System.out.printf("%-15s %-30s%n", "ID", "NAME");
                             System.out.println("---------------------------------------------");
                             while (rs.next()) {
-                                System.out.printf("%-15s %-30s%n", 
-                                    rs.getString("designation_id"), 
-                                    rs.getString("designation_name")
-                                );
+                                System.out.printf("%-15s %-30s%n",
+                                        rs.getString("designation_id"),
+                                        rs.getString("designation_name"));
                             }
                         }
                     }
@@ -117,7 +118,8 @@ public class AdminConfigService {
                         String id = InputUtil.readString("Designation ID to Update: ");
                         String name = InputUtil.readString("New Designation Name: ");
                         designationDAO.updateDesignation(id, name);
-                        AuditService.log(getAdminId(), "UPDATE", "DESIGNATIONS", "Name", id, "Designation name changed to " + name);
+                        AuditService.log(getAdminId(), "UPDATE", "DESIGNATIONS", "Name", id,
+                                "Designation name changed to " + name);
                         System.out.println("Designation updated successfully.");
                     }
                     case 4 -> {
@@ -127,7 +129,9 @@ public class AdminConfigService {
                         AuditService.log(getAdminId(), "DELETE", "DESIGNATIONS", "All", id, "Designation deleted");
                         System.out.println("Designation deleted successfully.");
                     }
-                    case 5 -> { return; }
+                    case 5 -> {
+                        return;
+                    }
                     default -> System.out.println("Invalid option.");
                 }
             } catch (Exception e) {
@@ -144,10 +148,11 @@ public class AdminConfigService {
             Date end = Date.valueOf(InputUtil.readString("End Date (YYYY-MM-DD): "));
 
             cycleDAO.createCycle(name, start, end);
-            AuditService.log(getAdminId(), "CREATE", "PERFORMANCE_CYCLES", "Name/Dates", name, "Performance cycle created");
+            AuditService.log(getAdminId(), "CREATE", "PERFORMANCE_CYCLES", "Name/Dates", name,
+                    "Performance cycle created");
             System.out.println("Performance cycle configured successfully.");
         } catch (IllegalArgumentException e) {
-             System.out.println("Invalid date format.");
+            System.out.println("Invalid date format.");
         } catch (Exception e) {
             System.err.println("Failed to create cycle: " + e.getMessage());
         }
@@ -169,7 +174,8 @@ public class AdminConfigService {
                         String key = InputUtil.readString("Policy Name (Key): ");
                         String value = InputUtil.readString("Policy Value: ");
                         policyDAO.updatePolicy(key, value);
-                        AuditService.log(getAdminId(), "UPDATE", "SYSTEM_POLICIES", "Value", key, "Policy updated/created");
+                        AuditService.log(getAdminId(), "UPDATE", "SYSTEM_POLICIES", "Value", key,
+                                "Policy updated/created");
                         System.out.println("Policy saved successfully.");
                     }
                     case 2 -> {
@@ -182,7 +188,9 @@ public class AdminConfigService {
                         AuditService.log(getAdminId(), "DELETE", "SYSTEM_POLICIES", "All", key, "Policy deleted");
                         System.out.println("Policy deleted successfully.");
                     }
-                    case 4 -> { return; }
+                    case 4 -> {
+                        return;
+                    }
                     default -> System.out.println("Invalid option.");
                 }
             } catch (Exception e) {
@@ -195,16 +203,16 @@ public class AdminConfigService {
         try {
             System.out.println("\n--- ADD HOLIDAY ---");
             String name = InputUtil.readString("Holiday Name: ");
-            
+
             Date date = null;
             int year = 0;
-            
+
             while (date == null) {
                 try {
                     String dateStr = InputUtil.readString("Date (YYYY-MM-DD): ");
                     Date tempDate = Date.valueOf(dateStr);
                     java.time.LocalDate localDate = tempDate.toLocalDate();
-                    
+
                     if (localDate.isBefore(java.time.LocalDate.now())) {
                         System.out.println("Error: Cannot configure holiday in the past. Please try again.");
                     } else {
@@ -220,7 +228,7 @@ public class AdminConfigService {
             AuditService.log(getAdminId(), "CREATE", "HOLIDAYS", "Date", name, "Holiday added: " + date);
             System.out.println("Holiday configured successfully.");
         } catch (Exception e) {
-             System.err.println("Failed to add holiday: " + e.getMessage());
+            System.err.println("Failed to add holiday: " + e.getMessage());
         }
     }
 }
