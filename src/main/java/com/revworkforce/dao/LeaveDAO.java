@@ -381,4 +381,32 @@ public class LeaveDAO {
         return null;
     }
 
+    /**
+     * Prints all available leave types (e.g., Sick, Vacation) to the console.
+     * This helper function is used by the UI (LeaveService) to display options
+     * before asking the user to input a Leave Type ID.
+     */
+    public void printLeaveTypes() {
+        // SQL query to fetch ID and Name of all leave types, ordered largely for
+        // readability
+        String sql = "SELECT leave_type_id, leave_type_name FROM leave_types ORDER BY leave_type_id";
+
+        // Execute query using try-with-resources to ensure connection closure
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            System.out.println("\n--- LEAVE TYPES ---");
+            // Iterate through the result set and print each leave type
+            while (rs.next()) {
+                // Formatting output as "ID | Name" for clear user selection
+                System.out.println(rs.getInt("leave_type_id") + " | " + rs.getString("leave_type_name"));
+            }
+        } catch (Exception e) {
+            // Using System.out here to keep CLI feedback simple during this read-only
+            // operation
+            System.out.println("Error listing leave types: " + e.getMessage());
+        }
+    }
+
 }

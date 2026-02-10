@@ -13,8 +13,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,111 +30,122 @@ class AdminServiceTest {
 
         @BeforeEach
         void setUp() throws Exception {
+                // Initialize Mockito annotations
                 mockEmpDao = Mockito.mock(EmployeeDAO.class);
                 mockDeptDao = Mockito.mock(DepartmentDAO.class);
                 mockDesigDao = Mockito.mock(DesignationDAO.class);
 
+                // Inject Mocks into AdminService:
+                // AdminService uses multiple DAOs (Employee, Department, Designation), all must
+                // be injected
                 setPrivateStaticField(AdminService.class, "employeeDAO", mockEmpDao);
                 setPrivateStaticField(AdminService.class, "departmentDAO", mockDeptDao);
                 setPrivateStaticField(AdminService.class, "designationDAO", mockDesigDao);
 
-                // Inject into EmployeeService as well since AdminService delegates to it
+                // Inject into EmployeeService as well since AdminService delegates some checks
                 setPrivateStaticField(EmployeeService.class, "employeeDAO", mockEmpDao);
 
+                // Mock Static InputUtil: This is critical for testing console-based UI services
+                // allowing us to script the user's responses.
                 mockInputUtil = Mockito.mockStatic(InputUtil.class);
         }
 
         @AfterEach
         void tearDown() {
+                // Always close static mocks
                 if (mockInputUtil != null) {
                         mockInputUtil.close();
                 }
         }
 
-        private void setPrivateStaticField(Class<?> clazz, String fieldName, Object value) throws Exception {
-                Field field = clazz.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                field.set(null, value);
-        }
-
+        /**
+         * Test Case: Adming adding a new employee.
+         * Complexity: High (Interaction with multiple DAOs and many inputs)
+         * Steps:
+         * 1. Mock inputs for Manager Role check, Personal Info, Professional Info.
+         * 2. Mock validations (e.g., Dept ID exists).
+         * 3. Execute method.
+         * 4. Capture the 'Employee' object passed to the DAO to verify all fields are
+         * set correctly.
+         */
         @Test
         void testAddEmployee_Success() throws Exception {
-                // Mock Inputs for AdminService.addEmployee() flow
+                // Mock Inputs for AdminService.addEmployee() flow sequentially:
 
-                // 1. Manager? (Y/N) -> "N" (Uses 3-arg readValidatedString)
+                // 1. Role Check: "N" -> Not a Manager
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Manager?"), any(),
                                 anyString()))
                                 .thenReturn("N");
 
+                // Mock ID Generation
                 when(mockEmpDao.getNextId("EMP")).thenReturn("EMP001");
 
-                // 2. First Name -> "John" (Uses 3-arg)
+                // 2-6. Personal Details (First, Last, Email, Phone, Address)
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("First Name"), any(),
                                 anyString()))
                                 .thenReturn("John");
 
-                // 3. Last Name -> "Doe" (Uses 3-arg)
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Last Name"), any(),
                                 anyString()))
                                 .thenReturn("Doe");
 
-                // 4. Email -> "john@example.com"
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Email"), any()))
                                 .thenReturn("john@example.com");
 
-                // 5. Phone -> "1234567890"
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Phone"), any()))
                                 .thenReturn("1234567890");
 
-                // 6. Address -> "123 Main St"
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Address"), any(),
                                 anyString()))
                                 .thenReturn("123 Main St");
 
-                // 7. Emergency -> "Jane Doe"
+                // 7-8. Emergency Contact & DOB
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Emergency"), any(),
                                 anyString()))
                                 .thenReturn("Jane Doe");
 
-                // 8. DOB -> "1990-01-01"
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("DOB"), any()))
                                 .thenReturn("1990-01-01");
 
-                // 9. Joining Date Option -> 1 (Today)
+                // 9. Joining Date Selection: Option 1 (Today)
                 mockInputUtil.when(() -> InputUtil.readInt(anyString())).thenReturn(1);
 
-                // 10. Dept ID -> "101" (Must be parseable int)
+                // 10. Department ID Selection
+                // The service prints department list before this (not verified here, but
+                // implied)
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Department ID"), any()))
                                 .thenReturn("101");
-                // Mock validation for Dept ID
+                // Mock validation: 101 must exist
                 when(mockDeptDao.isDepartmentIdExists("101")).thenReturn(true);
 
-                // 11. Desig ID -> "201" (Must be parseable int)
+                // 11. Designation ID Selection
+                // The service prints designation list before this
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Designation ID"), any()))
                                 .thenReturn("201");
-                // Mock validation for Desig ID
+                // Mock validation: 201 must exist and match 'Employee' role (false)
                 when(mockDesigDao.isDesignationIdExists("201")).thenReturn(true);
                 when(mockDesigDao.isDesignationMatchRole("201", false)).thenReturn(true);
 
-                // 12. Manager ID (Uses simple readString)
-                mockInputUtil.when(() -> InputUtil.readString(contains("Manager ID"))).thenReturn("");
-                // Mock manager validation (null case handled, but if non-empty, we'd mock
-                // isEmployeeExists)
+                // 12. Reporting Manager Selection
+                // The service prints employee list before this
+                mockInputUtil.when(() -> InputUtil.readString(contains("Manager ID"))).thenReturn(""); // Skip
 
-                // 13. Salary -> "50000" (Uses 3-arg)
+                // 13. Salary
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Salary"), any(),
                                 anyString()))
                                 .thenReturn("50000");
 
-                // Execute
+                // Execute Service Method
                 AdminService.addEmployee();
 
-                // Verify
+                // Verification:
+                // Use ArgumentCaptor to inspect the Employee object constructed by the Service
                 ArgumentCaptor<Employee> empCaptor = ArgumentCaptor.forClass(Employee.class);
                 verify(mockEmpDao).insertEmployee(empCaptor.capture());
 
                 Employee capturedEmp = empCaptor.getValue();
 
+                // Assertions to ensure data integrity
                 assertEquals("EMP001", capturedEmp.getEmployeeId());
                 assertEquals("John", capturedEmp.getFirstName());
                 assertEquals("Doe", capturedEmp.getLastName());
@@ -371,5 +380,11 @@ class AdminServiceTest {
                 AdminService.resetUserPassword();
 
                 verify(mockEmpDao, never()).updatePassword(anyString(), anyString());
+        }
+
+        private void setPrivateStaticField(Class<?> clazz, String fieldName, Object value) throws Exception {
+                Field field = clazz.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                field.set(null, value);
         }
 }

@@ -124,16 +124,22 @@ public class AdminService {
     }
 
     private static void promptProfessionalInfo(Employee emp, boolean isManagerRole) {
+        // Display list of all departments so the user knows valid IDs (e.g., 5 | HR)
         departmentDAO.printDepartments();
         String deptStr = InputUtil.readValidatedString("Department ID: ", AdminService::validateDepartment);
         emp.setDepartmentId(Integer.parseInt(deptStr));
 
+        // Display list of designations compatible with the selected role (Manager vs
+        // Employee)
         designationDAO.printDesignations(isManagerRole);
         String desigStr = InputUtil.readValidatedString("Designation ID: ",
                 input -> validateDesignation(input, isManagerRole));
         emp.setDesignationId(Integer.parseInt(desigStr));
 
+        // For non-Manager employees, assign a reporting manager
         if (!"MGR".equals(emp.getEmployeeId().substring(0, 3))) {
+            // Show all employees to help select a Manager ID
+            employeeDAO.printAllEmployees();
             String mgr = InputUtil.readString("Manager ID (Press Enter to skip): ");
             // Validate manager existence if provided
             if (!mgr.isEmpty()) {
@@ -262,6 +268,7 @@ public class AdminService {
     public static void updateEmployee() {
         try {
             System.out.println("\n--- UPDATE EMPLOYEE ---");
+            employeeDAO.printAllEmployees();
             String id = InputUtil.readString("Employee ID to Update: ");
 
             if (!employeeDAO.isEmployeeExists(id)) {
@@ -288,6 +295,8 @@ public class AdminService {
                 System.out.println("Contact info updated successfully");
 
             } else if (choice == 2) {
+                // UI Helper: Show available Departments before asking for ID
+                departmentDAO.printDepartments();
                 String dept = InputUtil.readValidatedString("New Department ID: ", AdminService::validateDepartment);
 
                 // Determine if upgrading to manager or not for designation check
@@ -295,12 +304,17 @@ public class AdminService {
                 // Better: Check current role. Assuming ID prefix logic for now or prompt.
                 // Simplified: validating designation existence only here to avoid complex role
                 // logic re-fetch
+
+                // UI Helper: Show available Designations
+                designationDAO.printDesignations();
                 String desig = InputUtil.readString("New Designation ID: ");
                 if (!designationDAO.isDesignationIdExists(desig)) {
                     System.out.println("Error: Invalid Designation ID.");
                     return;
                 }
 
+                // UI Helper: Show all employees to facilitate Manager selection
+                employeeDAO.printAllEmployees();
                 String mgr = InputUtil.readString("New Manager ID (Press Enter to skip): ");
                 if (!mgr.isEmpty() && !employeeDAO.isEmployeeExists(mgr)) {
                     System.out.println("Error: Manager ID not found.");
@@ -337,6 +351,8 @@ public class AdminService {
 
     public static void toggleEmployeeStatus() {
         try {
+            System.out.println("\n--- TOGGLE EMPLOYEE STATUS ---");
+            employeeDAO.printAllEmployees();
             String empId = InputUtil.readString("Employee ID to Toggle: ");
             if (!employeeDAO.isEmployeeExists(empId)) {
                 System.out.println("Error: Employee ID not found.");
@@ -358,6 +374,8 @@ public class AdminService {
      */
     public static void assignManager() {
         try {
+            System.out.println("\n--- ASSIGN MANAGER ---");
+            employeeDAO.printAllEmployees();
             String empId = InputUtil.readString("Employee ID: ");
             if (!employeeDAO.isEmployeeExists(empId)) {
                 System.out.println("Error: Employee ID not found.");
@@ -394,6 +412,8 @@ public class AdminService {
      * This is an administrative override for security lockouts.
      */
     public static void unlockEmployeeAccount() {
+        System.out.println("\n--- UNLOCK ACCOUNT ---");
+        employeeDAO.printAllEmployees();
         String empId = InputUtil.readString("Employee ID to unlock: ");
         try {
             if (!employeeDAO.isEmployeeExists(empId)) {
@@ -431,6 +451,8 @@ public class AdminService {
      * The new password is immediately hashed before storage.
      */
     public static void resetUserPassword() {
+        System.out.println("\n--- RESET PASSWORD ---");
+        employeeDAO.printAllEmployees();
         String empId = InputUtil.readString("Employee ID to Reset Password: ");
         try {
             if (!employeeDAO.isEmployeeExists(empId)) {

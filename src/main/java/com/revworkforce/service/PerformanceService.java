@@ -21,6 +21,7 @@ public class PerformanceService {
     private static final Logger logger = LogManager.getLogger(PerformanceService.class);
 
     private static PerformanceDAO dao = new PerformanceDAO();
+    private static com.revworkforce.dao.PerformanceCycleDAO cycleDAO = new com.revworkforce.dao.PerformanceCycleDAO();
 
     /**
      * Allows a manager to view performance reviews of their team.
@@ -71,6 +72,9 @@ public class PerformanceService {
     public static void submitSelfReview(String empId) {
 
         try {
+            // UI Helper: Show list of active cycles (e.g., 2024 Q1) so user knows what ID
+            // to enter
+            cycleDAO.printActiveCycles();
             int cycleId = InputUtil.readInt("Performance Cycle ID: ");
             String del = InputUtil.readString("Key Deliverables: ");
             String acc = InputUtil.readString("Major Accomplishments: ");

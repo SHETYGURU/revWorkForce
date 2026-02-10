@@ -61,4 +61,40 @@ public class PerformanceCycleDAO {
         PreparedStatement ps = con.prepareStatement(sql);
         return ps.executeQuery();
     }
+
+    /**
+     * Prints all currently active performance cycles to the console.
+     * This helper is used by PerformanceService to show valid options before
+     * asking the employee to select a cycle for their self-review.
+     */
+    public void printActiveCycles() {
+        // Query only active cycles (is_active = 1), ordered by start date
+        String sql = "SELECT cycle_id, cycle_name, start_date, end_date FROM performance_cycles WHERE is_active = 1 ORDER BY start_date DESC";
+
+        // Try-with-resources handles closing connection, statement, and result set
+        // automatically
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            System.out.println("\n--- ACTIVE PERFORMANCE CYCLES ---");
+            boolean found = false;
+            // Loop through results
+            while (rs.next()) {
+                found = true;
+                // Display ID, Name, and Date Range to help user identify the correct cycle
+                System.out.println(
+                        rs.getInt("cycle_id") + " | " +
+                                rs.getString("cycle_name") + " (" +
+                                rs.getDate("start_date") + " to " +
+                                rs.getDate("end_date") + ")");
+            }
+            // Inform user if no cycles are open
+            if (!found) {
+                System.out.println("No active performance cycles found.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error listing performance cycles: " + e.getMessage());
+        }
+    }
 }

@@ -63,6 +63,10 @@ public class LeaveService {
         try {
             // Suggest implementing a 'View Leave Types' here first for better UX
             // For now, prompt ID directly as per existing flow
+
+            // UI Helper: Display list of Leave Types (e.g., 1 | Sick Leave) before asking
+            // for ID
+            dao.printLeaveTypes();
             int leaveType = InputUtil.readInt("Leave Type ID: ");
             Date start = Date.valueOf(InputUtil.readString("Start Date (YYYY-MM-DD): "));
             Date end = Date.valueOf(InputUtil.readString("End Date (YYYY-MM-DD): "));
@@ -122,6 +126,7 @@ public class LeaveService {
      * @param empId Employee ID.
      */
     public static void cancelLeave(String empId) {
+        viewMyLeaves(empId);
         int leaveId = InputUtil.readInt("Enter Leave Application ID to cancel: ");
         try {
             dao.cancelLeave(leaveId, empId);

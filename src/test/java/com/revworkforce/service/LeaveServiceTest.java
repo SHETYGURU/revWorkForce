@@ -31,35 +31,58 @@ class LeaveServiceTest {
     void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
 
-        // Inject mockDAO
+        // Inject mockDAO: Reflection is used to set the private static 'dao' field in
+        // LeaveService
+        // This allows us to intercept DAO calls without needing dependency injection
+        // framework
         setStaticField(LeaveService.class, "dao", mockDao);
 
-        // Mock statics
+        // Mock statics: InputUtil and AuditService are static utilities
+        // We mock them to control user input and verify audit logging without side
+        // effects
         mockedInputUtil = Mockito.mockStatic(InputUtil.class);
         mockedAuditService = Mockito.mockStatic(AuditService.class);
     }
 
     @AfterEach
     void tearDown() throws Exception {
+        // Close static mocks to avoid memory leaks and interference with other tests
         if (mockedInputUtil != null)
             mockedInputUtil.close();
         if (mockedAuditService != null)
             mockedAuditService.close();
+        // Reset the static DAO field to a fresh instance or null to clean up state
         setStaticField(LeaveService.class, "dao", null);
         setStaticField(LeaveService.class, "dao", new LeaveDAO());
     }
 
+    /**
+     * Test Case: Successfully applying for leave.
+     * Logic:
+     * 1. Mock user inputs for Leave Type, Dates, and Reason.
+     * 2. Call the service method.
+     * 3. Verify that the DAO's applyLeave method is called with correctly parsed
+     * parameters.
+     * 4. Verify that an audit log entry is created.
+     */
     @Test
     void testApplyLeave_Success() throws Exception {
+        // Mock UI Inputs:
+        // 1. Leave Type ID (e.g., 1 for Sick Leave) - The list is printed before this
+        // read
         mockedInputUtil.when(() -> InputUtil.readInt(anyString())).thenReturn(1);
+        // 2. Dates and Reason
         mockedInputUtil.when(() -> InputUtil.readString(contains("Start"))).thenReturn("2024-01-01");
         mockedInputUtil.when(() -> InputUtil.readString(contains("End"))).thenReturn("2024-01-05");
         mockedInputUtil.when(() -> InputUtil.readString(contains("Reason"))).thenReturn("Sick");
 
+        // Execute Service Method
         LeaveService.applyLeave("EMP1");
 
-        // dates match
+        // Verification:
+        // Ensure DAO received the correct ID, Dates, and Reason
         verify(mockDao).applyLeave(eq("EMP1"), eq(1), any(Date.class), any(Date.class), eq("Sick"));
+        // Ensure action was logged
         mockedAuditService
                 .verify(() -> AuditService.log(eq("EMP1"), anyString(), anyString(), anyString(), anyString()));
     }

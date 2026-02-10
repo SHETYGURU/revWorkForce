@@ -12,11 +12,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
-import java.sql.Date;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class PerformanceServiceTest {
@@ -33,7 +31,13 @@ class PerformanceServiceTest {
     void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
 
+        // Inject the mock DAO into the static field of PerformanceService
         setStaticField(PerformanceService.class, "dao", mockDao);
+        // Also need to inject the cycleDAO mock if we were testing the
+        // printActiveCycles interaction,
+        // but for now we focus on the main dao. Note: Ideally process-related DAOs
+        // should also be injected.
+
         mockedInputUtil = Mockito.mockStatic(InputUtil.class);
         mockedAuditService = Mockito.mockStatic(AuditService.class);
     }
@@ -48,32 +52,58 @@ class PerformanceServiceTest {
         setStaticField(PerformanceService.class, "dao", new PerformanceDAO());
     }
 
+    /**
+     * Test Case: Reviewing Team Members (Manager Goal)
+     * Logic:
+     * 1. Mock DAO to return an empty ResultSet (or one valid row) for team reviews.
+     * 2. Mock User Input for Feedback and Rating.
+     * 3. Verify DAO update method is called.
+     */
     @Test
     void testReviewTeam() throws Exception {
+        // Setup: Mock DAO to return ONE valid row to enter the loop, then false
         when(mockDao.getTeamReviews("MGR1")).thenReturn(mockResultSet);
-        when(mockResultSet.next()).thenReturn(false); // No loop
+        when(mockResultSet.next()).thenReturn(true, false);
+        when(mockResultSet.getInt("review_id")).thenReturn(10);
+        when(mockResultSet.getString("employee_name")).thenReturn("John Doe");
 
+        // Mock User Inputs
         mockedInputUtil.when(() -> InputUtil.readInt(contains("Review ID"))).thenReturn(10);
         mockedInputUtil.when(() -> InputUtil.readString(contains("Feedback"))).thenReturn("Good");
         mockedInputUtil.when(() -> InputUtil.readInt(contains("Rating"))).thenReturn(5);
 
+        // Execute
         PerformanceService.reviewTeam("MGR1");
 
+        // Verify DAO submitManagerFeedback is called
         verify(mockDao).submitManagerFeedback(10, "Good", 5);
+
+        // Verify Audit Log
         mockedAuditService
                 .verify(() -> AuditService.log(eq("MGR1"), anyString(), anyString(), anyString(), anyString()));
     }
 
+    /**
+     * Test Case: Submitting a Self Review.
+     * Logic:
+     * 1. The Service calls cycleDAO.printActiveCycles() (not verified here, but
+     * happens).
+     * 2. User inputs Cycle ID, Deliverables, etc.
+     * 3. DAO submits the review.
+     */
     @Test
     void testSubmitSelfReview() throws Exception {
+        // Mock User Inputs for the review form
         mockedInputUtil.when(() -> InputUtil.readInt(contains("Cycle"))).thenReturn(2024);
         mockedInputUtil.when(() -> InputUtil.readString(contains("Deliverables"))).thenReturn("A");
         mockedInputUtil.when(() -> InputUtil.readString(contains("Accomplishments"))).thenReturn("B");
         mockedInputUtil.when(() -> InputUtil.readString(contains("Improvement"))).thenReturn("C");
         mockedInputUtil.when(() -> InputUtil.readString(contains("Self Rating"))).thenReturn("4.0");
 
+        // Execute
         PerformanceService.submitSelfReview("EMP1");
 
+        // Verification: Ensure DAO is called with the captured values
         verify(mockDao).submitSelfReview("EMP1", 2024, "A", "B", "C", 4.0);
     }
 
