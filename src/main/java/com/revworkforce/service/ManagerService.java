@@ -59,6 +59,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error("Failed to fetch team: " + e.getMessage(), e);
+            System.out.println("Error: Failed to fetch team. " + e.getMessage());
         }
     }
 
@@ -91,6 +92,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error("Failed to fetch team: " + e.getMessage(), e);
+            System.out.println("Error: Failed to fetch team. " + e.getMessage());
         }
     }
 
@@ -106,6 +108,7 @@ public class ManagerService {
             return employeeDAO.isReportee(managerId, empId);
         } catch (Exception e) {
             logger.error("Error in viewTeamDirectory", e);
+            System.out.println("Error: " + e.getMessage());
         }
         return false;
     }
@@ -146,6 +149,7 @@ public class ManagerService {
 
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "leave requests: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch leave requests. " + e.getMessage());
         }
     }
 
@@ -167,6 +171,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error("Error checking reportee relationship", e);
+            System.out.println("Error: " + e.getMessage());
         }
         return false;
     }
@@ -204,6 +209,7 @@ public class ManagerService {
 
         } catch (Exception e) {
             logger.error("Leave processing failed: " + e.getMessage(), e);
+            System.out.println("Error: Leave processing failed. " + e.getMessage());
         }
     }
 
@@ -221,6 +227,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "team leave calendar: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch team leave calendar. " + e.getMessage());
         }
     }
 
@@ -252,6 +259,7 @@ public class ManagerService {
 
         } catch (Exception e) {
             logger.error("Failed to revoke leave: " + e.getMessage(), e);
+            System.out.println("Error: Failed to revoke leave. " + e.getMessage());
         }
     }
 
@@ -268,6 +276,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "employee leave calendar: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch employee leave calendar. " + e.getMessage());
         }
     }
 
@@ -286,6 +295,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "team leave balances: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch team leave balances. " + e.getMessage());
         }
     }
 
@@ -310,6 +320,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "attendance: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch attendance. " + e.getMessage());
         }
     }
 
@@ -326,6 +337,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "performance data: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch performance data. " + e.getMessage());
         }
     }
 
@@ -341,6 +353,16 @@ public class ManagerService {
     public static void submitPerformanceReview(String managerId, int reviewId, String feedback, int rating) {
         try {
             String targetEmpId = performanceDAO.getEmployeeIdForReview(reviewId);
+
+            // Validation: Ensure the review belongs to an employee managed by this manager
+            if (targetEmpId == null) {
+                System.out.println("Error: Review ID not found.");
+                return;
+            }
+            if (!employeeDAO.isReportee(managerId, targetEmpId)) {
+                System.out.println("Error: You can only review your own team members.");
+                return;
+            }
 
             performanceDAO.submitManagerFeedback(reviewId, feedback, rating);
 
@@ -361,6 +383,7 @@ public class ManagerService {
 
         } catch (Exception e) {
             logger.error("Performance review failed: " + e.getMessage(), e);
+            System.out.println("Error: Performance review failed. " + e.getMessage());
         }
     }
 
@@ -381,6 +404,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "team goals: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch team goals. " + e.getMessage());
         }
     }
 
@@ -397,6 +421,7 @@ public class ManagerService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "goal summary: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch goal summary. " + e.getMessage());
         }
     }
 }

@@ -6,6 +6,8 @@ import java.sql.Timestamp;
 /**
  * Represents a performance review cycle (e.g., "2024 Appraisal").
  * Maps to the 'performance_cycles' table.
+ * 
+ * @author Gururaj Shetty
  */
 public class PerformanceCycle {
 
@@ -15,18 +17,43 @@ public class PerformanceCycle {
     private Date endDate;
     private String status; // ACTIVE, CLOSED
 
-    public int getCycleId() { return cycleId; }
-    public void setCycleId(int cycleId) { this.cycleId = cycleId; }
+    public int getCycleId() {
+        return cycleId;
+    }
 
-    public int getYear() { return year; }
-    public void setYear(int year) { this.year = year; }
+    public void setCycleId(int cycleId) {
+        this.cycleId = cycleId;
+    }
 
-    public Date getStartDate() { return startDate; }
-    public void setStartDate(Date startDate) { this.startDate = startDate; }
+    public int getYear() {
+        return year;
+    }
 
-    public Date getEndDate() { return endDate; }
-    public void setEndDate(Date endDate) { this.endDate = endDate; }
+    public void setYear(int year) {
+        this.year = year;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

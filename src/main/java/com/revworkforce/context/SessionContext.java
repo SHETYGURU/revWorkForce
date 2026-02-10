@@ -2,6 +2,12 @@ package com.revworkforce.context;
 
 import com.revworkforce.model.Employee;
 
+/**
+ * Manages the current user session context using ThreadLocal or static storage.
+ * Handles login state and session timeouts.
+ * 
+ * @author Gururaj Shetty
+ */
 public class SessionContext {
 
     private static Employee employee;

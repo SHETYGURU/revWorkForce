@@ -6,6 +6,8 @@ import java.sql.Timestamp;
 /**
  * Represents a Leave Application.
  * Maps to the 'leave_applications' table.
+ * 
+ * @author Gururaj Shetty
  */
 public class LeaveApplication {
 
@@ -23,39 +25,99 @@ public class LeaveApplication {
     private String reviewedBy;
 
     // Getters and Setters
-    public int getLeaveApplicationId() { return leaveApplicationId; }
-    public void setLeaveApplicationId(int leaveApplicationId) { this.leaveApplicationId = leaveApplicationId; }
+    public int getLeaveApplicationId() {
+        return leaveApplicationId;
+    }
 
-    public String getEmployeeId() { return employeeId; }
-    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public void setLeaveApplicationId(int leaveApplicationId) {
+        this.leaveApplicationId = leaveApplicationId;
+    }
 
-    public int getLeaveTypeId() { return leaveTypeId; }
-    public void setLeaveTypeId(int leaveTypeId) { this.leaveTypeId = leaveTypeId; }
+    public String getEmployeeId() {
+        return employeeId;
+    }
 
-    public Date getStartDate() { return startDate; }
-    public void setStartDate(Date startDate) { this.startDate = startDate; }
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
 
-    public Date getEndDate() { return endDate; }
-    public void setEndDate(Date endDate) { this.endDate = endDate; }
+    public int getLeaveTypeId() {
+        return leaveTypeId;
+    }
 
-    public int getTotalDays() { return totalDays; }
-    public void setTotalDays(int totalDays) { this.totalDays = totalDays; }
+    public void setLeaveTypeId(int leaveTypeId) {
+        this.leaveTypeId = leaveTypeId;
+    }
 
-    public String getReason() { return reason; }
-    public void setReason(String reason) { this.reason = reason; }
+    public Date getStartDate() {
+        return startDate;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
 
-    public String getManagerComments() { return managerComments; }
-    public void setManagerComments(String managerComments) { this.managerComments = managerComments; }
+    public Date getEndDate() {
+        return endDate;
+    }
 
-    public Timestamp getAppliedDate() { return appliedDate; }
-    public void setAppliedDate(Timestamp appliedDate) { this.appliedDate = appliedDate; }
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
 
-    public Timestamp getReviewedDate() { return reviewedDate; }
-    public void setReviewedDate(Timestamp reviewedDate) { this.reviewedDate = reviewedDate; }
+    public int getTotalDays() {
+        return totalDays;
+    }
 
-    public String getReviewedBy() { return reviewedBy; }
-    public void setReviewedBy(String reviewedBy) { this.reviewedBy = reviewedBy; }
+    public void setTotalDays(int totalDays) {
+        this.totalDays = totalDays;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getManagerComments() {
+        return managerComments;
+    }
+
+    public void setManagerComments(String managerComments) {
+        this.managerComments = managerComments;
+    }
+
+    public Timestamp getAppliedDate() {
+        return appliedDate;
+    }
+
+    public void setAppliedDate(Timestamp appliedDate) {
+        this.appliedDate = appliedDate;
+    }
+
+    public Timestamp getReviewedDate() {
+        return reviewedDate;
+    }
+
+    public void setReviewedDate(Timestamp reviewedDate) {
+        this.reviewedDate = reviewedDate;
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String reviewedBy) {
+        this.reviewedBy = reviewedBy;
+    }
 }

@@ -3,13 +3,19 @@ package com.revworkforce.dao;
 import com.revworkforce.util.DBConnection;
 import java.sql.*;
 
+/**
+ * DAO for managing Holidays.
+ * Handles adding and retrieving holiday calendar.
+ * 
+ * @author Gururaj Shetty
+ */
 public class HolidayDAO {
 
     public void addHoliday(String name, Date date, int year) throws Exception {
         String sql = "INSERT INTO holidays (holiday_name, holiday_date, year) VALUES (?, ?, ?)";
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setDate(2, date);
             ps.setInt(3, year);

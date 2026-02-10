@@ -6,6 +6,8 @@ import java.sql.Timestamp;
 /**
  * Represents an employee's daily attendance record.
  * Maps to the 'attendance' table.
+ * 
+ * @author Gururaj Shetty
  */
 public class Attendance {
 
@@ -16,21 +18,51 @@ public class Attendance {
     private Timestamp checkOutTime;
     private String status; // PRESENT, ABSENT, HALF_DAY
 
-    public int getAttendanceId() { return attendanceId; }
-    public void setAttendanceId(int attendanceId) { this.attendanceId = attendanceId; }
+    public int getAttendanceId() {
+        return attendanceId;
+    }
 
-    public String getEmployeeId() { return employeeId; }
-    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public void setAttendanceId(int attendanceId) {
+        this.attendanceId = attendanceId;
+    }
 
-    public Date getAttendanceDate() { return attendanceDate; }
-    public void setAttendanceDate(Date attendanceDate) { this.attendanceDate = attendanceDate; }
+    public String getEmployeeId() {
+        return employeeId;
+    }
 
-    public Timestamp getCheckInTime() { return checkInTime; }
-    public void setCheckInTime(Timestamp checkInTime) { this.checkInTime = checkInTime; }
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
 
-    public Timestamp getCheckOutTime() { return checkOutTime; }
-    public void setCheckOutTime(Timestamp checkOutTime) { this.checkOutTime = checkOutTime; }
+    public Date getAttendanceDate() {
+        return attendanceDate;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setAttendanceDate(Date attendanceDate) {
+        this.attendanceDate = attendanceDate;
+    }
+
+    public Timestamp getCheckInTime() {
+        return checkInTime;
+    }
+
+    public void setCheckInTime(Timestamp checkInTime) {
+        this.checkInTime = checkInTime;
+    }
+
+    public Timestamp getCheckOutTime() {
+        return checkOutTime;
+    }
+
+    public void setCheckOutTime(Timestamp checkOutTime) {
+        this.checkOutTime = checkOutTime;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

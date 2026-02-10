@@ -8,6 +8,11 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO for checking Roles.
+ * 
+ * @author Gururaj Shetty
+ */
 public class RoleDAO {
 
     /**
@@ -20,17 +25,17 @@ public class RoleDAO {
      */
     public String getEmployeeRole(String empId) throws Exception {
         String sql = """
-            SELECT r.role_name
-            FROM roles r
-            JOIN employee_roles er ON r.role_id = er.role_id
-            WHERE er.employee_id = ?
-        """;
+                    SELECT r.role_name
+                    FROM roles r
+                    JOIN employee_roles er ON r.role_id = er.role_id
+                    WHERE er.employee_id = ?
+                """;
 
         List<String> roles = new ArrayList<>();
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
+                PreparedStatement ps = con.prepareStatement(sql)) {
+
             ps.setString(1, empId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

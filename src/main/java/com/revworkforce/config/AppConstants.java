@@ -1,7 +1,9 @@
 package com.revworkforce.config;
 
 /**
- * System-wide constants.
+ * Application constants.
+ * 
+ * @author Gururaj Shetty
  */
 public class AppConstants {
 
@@ -18,7 +20,7 @@ public class AppConstants {
     public static final String LEAVE_CASUAL = "CL";
     public static final String LEAVE_SICK = "SL";
     public static final String LEAVE_PAID = "PL";
-    
+
     // Statuses
     public static final String STATUS_PENDING = "PENDING";
     public static final String STATUS_APPROVED = "APPROVED";

@@ -5,6 +5,13 @@ import com.revworkforce.util.InputUtil;
 
 import java.sql.Date;
 
+/**
+ * Service class for Admin Configuration.
+ * Handles configuration of Departments, Designations, Performance Cycles,
+ * System Policies, and Holidays.
+ * 
+ * @author Gururaj Shetty
+ */
 public class AdminConfigService {
 
     private static DepartmentDAO departmentDAO = new DepartmentDAO();

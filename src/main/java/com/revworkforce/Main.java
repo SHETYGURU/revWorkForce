@@ -7,6 +7,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 
+/**
+ * Main Entry Point for RevWorkForce HRMS Application.
+ * Initializes database connection and bootstraps the application.
+ * 
+ * @author Gururaj Shetty
+ */
 public class Main {
 
     private static final Logger logger = LogManager.getLogger(Main.class);

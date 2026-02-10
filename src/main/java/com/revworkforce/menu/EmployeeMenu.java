@@ -10,6 +10,10 @@ import com.revworkforce.util.InputUtil;
 
 /**
  * Menu UI for Employee Role.
+ * Provides access to personal profile, leave management, and performance
+ * tracking.
+ * 
+ * @author Gururaj Shetty
  */
 public class EmployeeMenu {
 

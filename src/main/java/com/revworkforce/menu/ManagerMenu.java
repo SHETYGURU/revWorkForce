@@ -8,7 +8,10 @@ import com.revworkforce.util.InputUtil;
 
 /**
  * Menu UI for Manager Role.
- * Extends Employee capabilities with Team Management features.
+ * Extends capabilities with Team Management, Leave Approval, and Performance
+ * Reviews.
+ * 
+ * @author Gururaj Shetty
  */
 public class ManagerMenu {
 

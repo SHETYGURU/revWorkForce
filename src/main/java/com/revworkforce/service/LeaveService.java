@@ -48,6 +48,7 @@ public class LeaveService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "leave balance: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch leave balance. " + e.getMessage());
         }
     }
 
@@ -83,6 +84,7 @@ public class LeaveService {
             System.out.println("Invalid date format. Please use YYYY-MM-DD.");
         } catch (Exception e) {
             logger.error("Leave application failed: " + e.getMessage(), e);
+            System.out.println("Error: Leave application failed. " + e.getMessage());
         }
     }
 
@@ -109,6 +111,7 @@ public class LeaveService {
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "leaves: " + e.getMessage(), e);
+            System.out.println("Error: Unable to fetch leaves. " + e.getMessage());
         }
     }
 
@@ -127,6 +130,7 @@ public class LeaveService {
             System.out.println("Leave cancelled (if it was pending).");
         } catch (Exception e) {
             logger.error("Cancel failed: " + e.getMessage(), e);
+            System.out.println("Error: Cancel failed. " + e.getMessage());
         }
     }
 

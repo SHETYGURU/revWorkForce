@@ -48,6 +48,7 @@ public class EmployeeService {
             }
         } catch (Exception e) {
             logger.error("Error fetching profile: " + e.getMessage(), e);
+            System.out.println("Error: Failed to fetch profile. " + e.getMessage());
         }
     }
 
@@ -95,6 +96,7 @@ public class EmployeeService {
             System.out.println("Profile updated successfully");
         } catch (Exception e) {
             logger.error("Profile update failed: " + e.getMessage(), e);
+            System.out.println("Error: Profile update failed. " + e.getMessage());
         }
     }
 
@@ -133,6 +135,7 @@ public class EmployeeService {
 
         } catch (Exception e) {
             logger.error("Password change failed: " + e.getMessage(), e);
+            System.out.println("Error: Password change failed. " + e.getMessage());
         }
     }
 
@@ -168,6 +171,7 @@ public class EmployeeService {
 
         } catch (Exception e) {
             logger.error("Error fetching manager details: " + e.getMessage(), e);
+            System.out.println("Error: Failed to fetch manager details. " + e.getMessage());
         }
     }
 
@@ -193,6 +197,7 @@ public class EmployeeService {
 
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "birthdays: " + e.getMessage(), e);
+            System.out.println("Error: Failed to fetch upcoming birthdays. " + e.getMessage());
         }
     }
 
@@ -216,6 +221,7 @@ public class EmployeeService {
 
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "anniversaries: " + e.getMessage(), e);
+            System.out.println("Error: Failed to fetch work anniversaries. " + e.getMessage());
         }
     }
 
@@ -240,6 +246,7 @@ public class EmployeeService {
 
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "announcements: " + e.getMessage(), e);
+            System.out.println("Error: Failed to fetch announcements. " + e.getMessage());
         }
     }
 
@@ -275,6 +282,7 @@ public class EmployeeService {
 
         } catch (Exception e) {
             logger.error("Search failed: " + e.getMessage(), e);
+            System.out.println("Error: Search failed. " + e.getMessage());
         }
     }
 }

@@ -82,6 +82,7 @@ public class AdminService {
 
         } catch (Exception e) {
             logger.error("Failed to add employee: " + e.getMessage(), e);
+            System.out.println("Error: Failed to add employee. " + e.getMessage());
         }
     }
 
@@ -134,6 +135,17 @@ public class AdminService {
 
         if (!"MGR".equals(emp.getEmployeeId().substring(0, 3))) {
             String mgr = InputUtil.readString("Manager ID (Press Enter to skip): ");
+            // Validate manager existence if provided
+            if (!mgr.isEmpty()) {
+                try {
+                    while (!mgr.isEmpty() && !employeeDAO.isEmployeeExists(mgr)) {
+                        System.out.println("Error: Manager ID not found.");
+                        mgr = InputUtil.readString("Manager ID (Press Enter to skip): ");
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error validating manager: " + e.getMessage());
+                }
+            }
             emp.setManagerId(mgr.isEmpty() ? null : mgr);
         }
     }
@@ -141,12 +153,12 @@ public class AdminService {
     private static Double promptSalary() {
         String salaryInput = InputUtil.readValidatedString("Salary: ", s -> {
             try {
-                Double.parseDouble(s);
-                return true;
+                double val = Double.parseDouble(s);
+                return val >= 0;
             } catch (NumberFormatException e) {
                 return false;
             }
-        }, "Invalid salary. Please enter a number.");
+        }, "Invalid salary. Please enter a positive number.");
         return Double.parseDouble(salaryInput);
     }
 
@@ -252,6 +264,11 @@ public class AdminService {
             System.out.println("\n--- UPDATE EMPLOYEE ---");
             String id = InputUtil.readString("Employee ID to Update: ");
 
+            if (!employeeDAO.isEmployeeExists(id)) {
+                System.out.println("Error: Employee ID not found.");
+                return;
+            }
+
             System.out.println("1. Update Contact Info (Phone, Address)");
             System.out.println("2. Update Professional Info (Dept, Desig, Salary)");
             int choice = InputUtil.readInt("Select Option: ");
@@ -271,13 +288,37 @@ public class AdminService {
                 System.out.println("Contact info updated successfully");
 
             } else if (choice == 2) {
-                String dept = InputUtil.readString("New Department ID: ");
-                String desig = InputUtil.readString("New Designation ID: ");
-                String mgr = InputUtil.readString("New Manager ID: ");
-                double salary = Double.parseDouble(InputUtil.readString("New Salary: "));
+                String dept = InputUtil.readValidatedString("New Department ID: ", AdminService::validateDepartment);
 
-                employeeDAO.updateProfessionalDetails(id, dept, desig, salary, mgr);
+                // Determine if upgrading to manager or not for designation check
+                // For simplicity, we assume role based on current ID or ask?
+                // Better: Check current role. Assuming ID prefix logic for now or prompt.
+                // Simplified: validating designation existence only here to avoid complex role
+                // logic re-fetch
+                String desig = InputUtil.readString("New Designation ID: ");
+                if (!designationDAO.isDesignationIdExists(desig)) {
+                    System.out.println("Error: Invalid Designation ID.");
+                    return;
+                }
+
+                String mgr = InputUtil.readString("New Manager ID (Press Enter to skip): ");
+                if (!mgr.isEmpty() && !employeeDAO.isEmployeeExists(mgr)) {
+                    System.out.println("Error: Manager ID not found.");
+                    return;
+                }
+
+                String salaryStr = InputUtil.readValidatedString("New Salary: ", s -> {
+                    try {
+                        return Double.parseDouble(s) >= 0;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                }, "Invalid Salary");
+                double salary = Double.parseDouble(salaryStr);
+
+                employeeDAO.updateProfessionalDetails(id, dept, desig, salary, mgr.isEmpty() ? null : mgr);
                 AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", "Dept/Desig", id, "Updated professional details");
+
                 logger.info("Employee professional details updated for: {}", id);
                 System.out.println("Professional info updated successfully");
             } else {
@@ -286,6 +327,7 @@ public class AdminService {
 
         } catch (Exception e) {
             logger.error("Update failed: " + e.getMessage(), e);
+            System.out.println("Error: Update failed. " + e.getMessage());
         }
     }
 
@@ -296,12 +338,18 @@ public class AdminService {
     public static void toggleEmployeeStatus() {
         try {
             String empId = InputUtil.readString("Employee ID to Toggle: ");
+            if (!employeeDAO.isEmployeeExists(empId)) {
+                System.out.println("Error: Employee ID not found.");
+                return;
+            }
+
             employeeDAO.toggleStatus(empId);
             AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", empId, "Status toggled");
             logger.info("Employee status toggled for: {}", empId);
             System.out.println("Employee status updated.");
         } catch (Exception e) {
             logger.error("Failed to toggle status: " + e.getMessage(), e);
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -311,13 +359,29 @@ public class AdminService {
     public static void assignManager() {
         try {
             String empId = InputUtil.readString("Employee ID: ");
+            if (!employeeDAO.isEmployeeExists(empId)) {
+                System.out.println("Error: Employee ID not found.");
+                return;
+            }
+
             String mgrId = InputUtil.readString("New Manager ID: ");
+            if (!employeeDAO.isEmployeeExists(mgrId)) {
+                System.out.println("Error: Manager ID not found.");
+                return;
+            }
+
+            if (empId.equals(mgrId)) {
+                System.out.println("Error: Cannot assign employee as their own manager.");
+                return;
+            }
+
             employeeDAO.assignManager(empId, mgrId);
             AuditService.log(getAdminId(), "UPDATE", "EMPLOYEES", empId, "Manager changed to " + mgrId);
             logger.info("Manager assigned for employee {}: New Manager {}", empId, mgrId);
             System.out.println("Manager assigned successfully.");
         } catch (Exception e) {
             logger.error("Failed to assign manager: " + e.getMessage(), e);
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -332,6 +396,11 @@ public class AdminService {
     public static void unlockEmployeeAccount() {
         String empId = InputUtil.readString("Employee ID to unlock: ");
         try {
+            if (!employeeDAO.isEmployeeExists(empId)) {
+                System.out.println("Error: Employee ID not found.");
+                return;
+            }
+
             String sql = """
                         UPDATE employees
                         SET account_locked = 0,
@@ -353,6 +422,7 @@ public class AdminService {
             }
         } catch (Exception e) {
             logger.error("Unlock failed: " + e.getMessage(), e);
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -363,6 +433,11 @@ public class AdminService {
     public static void resetUserPassword() {
         String empId = InputUtil.readString("Employee ID to Reset Password: ");
         try {
+            if (!employeeDAO.isEmployeeExists(empId)) {
+                System.out.println("Error: Employee ID not found.");
+                return;
+            }
+
             System.out.println("Enter new password:");
             String newPass = InputUtil.readString("New Password: ");
             if (newPass.isEmpty()) {
@@ -378,11 +453,12 @@ public class AdminService {
                 logger.info("Password reset by Admin for employee: {}", empId);
                 System.out.println("Password reset successfully.");
             } else {
-                System.out.println("Employee ID not found.");
+                System.out.println("Employee ID not found during update.");
             }
 
         } catch (Exception e) {
             logger.error("Password reset failed: " + e.getMessage(), e);
+            System.out.println("Error: " + e.getMessage());
         }
     }
 

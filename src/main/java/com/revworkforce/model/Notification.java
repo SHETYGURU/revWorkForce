@@ -5,6 +5,8 @@ import java.sql.Timestamp;
 /**
  * Represents a system notification.
  * Maps to the 'notifications' table.
+ * 
+ * @author Gururaj Shetty
  */
 public class Notification {
 
@@ -16,24 +18,59 @@ public class Notification {
     private Timestamp createdAt;
     private Timestamp readAt;
 
-    public int getNotificationId() { return notificationId; }
-    public void setNotificationId(int notificationId) { this.notificationId = notificationId; }
+    public int getNotificationId() {
+        return notificationId;
+    }
 
-    public String getEmployeeId() { return employeeId; }
-    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public void setNotificationId(int notificationId) {
+        this.notificationId = notificationId;
+    }
 
-    public String getNotificationType() { return notificationType; }
-    public void setNotificationType(String notificationType) { this.notificationType = notificationType; }
+    public String getEmployeeId() {
+        return employeeId;
+    }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
 
-    public boolean isRead() { return isRead; }
-    public void setRead(boolean read) { isRead = read; }
+    public String getNotificationType() {
+        return notificationType;
+    }
 
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public void setNotificationType(String notificationType) {
+        this.notificationType = notificationType;
+    }
 
-    public Timestamp getReadAt() { return readAt; }
-    public void setReadAt(Timestamp readAt) { this.readAt = readAt; }
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public boolean isRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        isRead = read;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Timestamp getReadAt() {
+        return readAt;
+    }
+
+    public void setReadAt(Timestamp readAt) {
+        this.readAt = readAt;
+    }
 }

@@ -445,4 +445,15 @@ public class EmployeeDAO {
             logger.error("Error listing employees: " + e.getMessage(), e);
         }
     }
+
+    public boolean isEmployeeExists(String empId) throws Exception {
+        String sql = "SELECT 1 FROM employees WHERE employee_id = ?";
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, empId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
 }

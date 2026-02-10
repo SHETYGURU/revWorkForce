@@ -1,8 +1,12 @@
 package com.revworkforce.exception;
 
 /**
+ * Custom application exception base class.
  * Custom runtime exception for the RevWorkForce application.
- * Used to wrap checked exceptions (like SQLException) or business rule violations.
+ * Used to wrap checked exceptions (like SQLException) or business rule
+ * violations.
+ * 
+ * @author Gururaj Shetty
  */
 public class AppException extends RuntimeException {
 
@@ -19,7 +23,8 @@ public class AppException extends RuntimeException {
      * Constructs a new AppException with the specified detail message and cause.
      *
      * @param message The detail message.
-     * @param cause   The cause (which is saved for later retrieval by the getCause() method).
+     * @param cause   The cause (which is saved for later retrieval by the
+     *                getCause() method).
      */
     public AppException(String message, Throwable cause) {
         super(message, cause);

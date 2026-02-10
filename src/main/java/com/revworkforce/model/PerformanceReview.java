@@ -5,6 +5,8 @@ import java.sql.Timestamp;
 /**
  * Represents a performance review document.
  * Maps to the 'performance_reviews' table.
+ * 
+ * @author Gururaj Shetty
  */
 public class PerformanceReview {
 
@@ -23,42 +25,107 @@ public class PerformanceReview {
     private String reviewedBy;
 
     // Getters / Setters
-    public int getReviewId() { return reviewId; }
-    public void setReviewId(int reviewId) { this.reviewId = reviewId; }
+    public int getReviewId() {
+        return reviewId;
+    }
 
-    public String getEmployeeId() { return employeeId; }
-    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public void setReviewId(int reviewId) {
+        this.reviewId = reviewId;
+    }
 
-    public int getCycleId() { return cycleId; }
-    public void setCycleId(int cycleId) { this.cycleId = cycleId; }
+    public String getEmployeeId() {
+        return employeeId;
+    }
 
-    public String getKeyDeliverables() { return keyDeliverables; }
-    public void setKeyDeliverables(String keyDeliverables) { this.keyDeliverables = keyDeliverables; }
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
 
-    public String getMajorAccomplishments() { return majorAccomplishments; }
-    public void setMajorAccomplishments(String majorAccomplishments) { this.majorAccomplishments = majorAccomplishments; }
+    public int getCycleId() {
+        return cycleId;
+    }
 
-    public String getAreasOfImprovement() { return areasOfImprovement; }
-    public void setAreasOfImprovement(String areasOfImprovement) { this.areasOfImprovement = areasOfImprovement; }
+    public void setCycleId(int cycleId) {
+        this.cycleId = cycleId;
+    }
 
-    public Double getSelfAssessmentRating() { return selfAssessmentRating; }
-    public void setSelfAssessmentRating(Double selfAssessmentRating) { this.selfAssessmentRating = selfAssessmentRating; }
+    public String getKeyDeliverables() {
+        return keyDeliverables;
+    }
 
-    public String getManagerFeedback() { return managerFeedback; }
-    public void setManagerFeedback(String managerFeedback) { this.managerFeedback = managerFeedback; }
+    public void setKeyDeliverables(String keyDeliverables) {
+        this.keyDeliverables = keyDeliverables;
+    }
 
-    public Double getManagerRating() { return managerRating; }
-    public void setManagerRating(Double managerRating) { this.managerRating = managerRating; }
+    public String getMajorAccomplishments() {
+        return majorAccomplishments;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setMajorAccomplishments(String majorAccomplishments) {
+        this.majorAccomplishments = majorAccomplishments;
+    }
 
-    public Timestamp getSubmittedDate() { return submittedDate; }
-    public void setSubmittedDate(Timestamp submittedDate) { this.submittedDate = submittedDate; }
+    public String getAreasOfImprovement() {
+        return areasOfImprovement;
+    }
 
-    public Timestamp getReviewedDate() { return reviewedDate; }
-    public void setReviewedDate(Timestamp reviewedDate) { this.reviewedDate = reviewedDate; }
+    public void setAreasOfImprovement(String areasOfImprovement) {
+        this.areasOfImprovement = areasOfImprovement;
+    }
 
-    public String getReviewedBy() { return reviewedBy; }
-    public void setReviewedBy(String reviewedBy) { this.reviewedBy = reviewedBy; }
+    public Double getSelfAssessmentRating() {
+        return selfAssessmentRating;
+    }
+
+    public void setSelfAssessmentRating(Double selfAssessmentRating) {
+        this.selfAssessmentRating = selfAssessmentRating;
+    }
+
+    public String getManagerFeedback() {
+        return managerFeedback;
+    }
+
+    public void setManagerFeedback(String managerFeedback) {
+        this.managerFeedback = managerFeedback;
+    }
+
+    public Double getManagerRating() {
+        return managerRating;
+    }
+
+    public void setManagerRating(Double managerRating) {
+        this.managerRating = managerRating;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Timestamp getSubmittedDate() {
+        return submittedDate;
+    }
+
+    public void setSubmittedDate(Timestamp submittedDate) {
+        this.submittedDate = submittedDate;
+    }
+
+    public Timestamp getReviewedDate() {
+        return reviewedDate;
+    }
+
+    public void setReviewedDate(Timestamp reviewedDate) {
+        this.reviewedDate = reviewedDate;
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String reviewedBy) {
+        this.reviewedBy = reviewedBy;
+    }
 }

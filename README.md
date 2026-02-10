@@ -210,6 +210,11 @@ To execute the full test suite via Maven:
 mvn test
 ```
 
+### Coverage Report
+After running tests, you can view the detailed code coverage report here:
+**[View Coverage Report](site/jacoco/index.html)**
+
+
 ### Key Test Classes
 *   **`EmployeeDAOTest`**: Verifies database CRUD operations using **Mockito** to mock `DBConnection`.
 *   **`DateUtilTest`**: Validates date calculation logic for leave duration and cycles.

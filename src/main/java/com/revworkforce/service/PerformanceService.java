@@ -58,6 +58,7 @@ public class PerformanceService {
 
         } catch (Exception e) {
             logger.error("Performance review failed: " + e.getMessage(), e);
+            System.out.println("Error: Performance review failed. " + e.getMessage());
         }
     }
 
@@ -89,6 +90,7 @@ public class PerformanceService {
 
         } catch (Exception e) {
             logger.error("Submission failed: " + e.getMessage(), e);
+            System.out.println("Error: Submission failed. " + e.getMessage());
         }
     }
 
@@ -127,6 +129,7 @@ public class PerformanceService {
 
         } catch (Exception e) {
             logger.error("Goal operation failed: " + e.getMessage(), e);
+            System.out.println("Error: Goal operation failed. " + e.getMessage());
         }
     }
 
@@ -148,6 +151,7 @@ public class PerformanceService {
             }
         } catch (Exception e) {
             logger.error("No feedback available: " + e.getMessage(), e);
+            System.out.println("Error: No feedback available. " + e.getMessage());
         }
     }
 

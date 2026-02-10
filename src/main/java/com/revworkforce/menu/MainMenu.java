@@ -8,7 +8,10 @@ import com.revworkforce.dao.RoleDAO;
 
 /**
  * Main application entry point menu.
- * Handles initial user authentication.
+ * Handles initial user authentication (Login, Forgot Password) and session
+ * setup.
+ * 
+ * @author Gururaj Shetty
  */
 public class MainMenu {
 

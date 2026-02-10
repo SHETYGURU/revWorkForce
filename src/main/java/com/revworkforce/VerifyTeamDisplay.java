@@ -6,6 +6,11 @@ import java.sql.ResultSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Verification script for testing Team Display functionality.
+ * 
+ * @author Gururaj Shetty
+ */
 public class VerifyTeamDisplay {
     private static final Logger logger = LogManager.getLogger(VerifyTeamDisplay.class);
 

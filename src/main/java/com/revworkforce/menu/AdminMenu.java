@@ -6,7 +6,9 @@ import com.revworkforce.util.InputUtil;
 
 /**
  * Menu UI for Administrator Role.
- * Provides system-wide configuration and employee management.
+ * Provides system-wide configuration, employee management, and audit controls.
+ * 
+ * @author Gururaj Shetty
  */
 public class AdminMenu {
 

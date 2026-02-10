@@ -10,8 +10,8 @@ import org.apache.logging.log4j.Logger;
 import java.sql.*;
 
 /**
- * DAO for System Configuration and Policies.
- * Handles update and retrieval of global system settings.
+ * DAO for managing System Policies.
+ * Handles CRUD operations for system-wide configurations.
  * 
  * @author Gururaj Shetty
  */
