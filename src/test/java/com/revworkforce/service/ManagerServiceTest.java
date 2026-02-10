@@ -134,7 +134,9 @@ class ManagerServiceTest {
 
     @Test
     void testSubmitPerformanceReview() throws Exception {
+        // Mock team member check
         when(mockPerformanceDao.getEmployeeIdForReview(50)).thenReturn("EMP003");
+        when(mockEmpDao.isReportee("MGR001", "EMP003")).thenReturn(true);
 
         ManagerService.submitPerformanceReview("MGR001", 50, "Great Job", 5);
 

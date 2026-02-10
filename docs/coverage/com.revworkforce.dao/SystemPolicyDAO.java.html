@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SystemPolicyDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.dao</a> &gt; <span class="el_source">SystemPolicyDAO.java</span></div><h1>SystemPolicyDAO.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.dao;
+
+import com.revworkforce.util.DBConnection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.*;
+
+/**
+ * DAO for System Configuration and Policies.
+ * Handles update and retrieval of global system settings.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="fc" id="L18">public class SystemPolicyDAO {</span>
+
+<span class="fc" id="L20">    private static final Logger logger = LogManager.getLogger(SystemPolicyDAO.class);</span>
+
+    /**
+     * Updates an existing policy or creates a new one if it doesn't exist (Upsert).
+     * 
+     * @param name  Policy Key/Name.
+     * @param value Policy Value.
+     * @throws Exception if database operation fails.
+     */
+    public void updatePolicy(String name, String value) throws Exception {
+
+<span class="fc" id="L31">        String sql = &quot;&quot;&quot;</span>
+                    MERGE INTO system_policies sp
+                    USING dual
+                    ON (sp.policy_name = ?)
+                    WHEN MATCHED THEN
+                        UPDATE SET sp.policy_value = ?, sp.updated_at = CURRENT_TIMESTAMP
+                    WHEN NOT MATCHED THEN
+                        INSERT (policy_name, policy_value)
+                        VALUES (?, ?)
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L42">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L43">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L45">            ps.setString(1, name);</span>
+<span class="fc" id="L46">            ps.setString(2, value);</span>
+<span class="fc" id="L47">            ps.setString(3, name);</span>
+<span class="fc" id="L48">            ps.setString(4, value);</span>
+<span class="fc" id="L49">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L51">    }</span>
+
+    public void deletePolicy(String name) throws Exception {
+<span class="fc" id="L54">        String sql = &quot;DELETE FROM system_policies WHERE policy_name = ?&quot;;</span>
+<span class="fc" id="L55">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L56">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+<span class="fc" id="L57">            ps.setString(1, name);</span>
+<span class="fc" id="L58">            int rows = ps.executeUpdate();</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">            if (rows == 0) {</span>
+<span class="fc" id="L60">                throw new Exception(&quot;Policy not found: &quot; + name);</span>
+            }
+        }
+<span class="fc" id="L63">    }</span>
+
+    public void printPolicies() {
+<span class="nc" id="L66">        String sql = &quot;&quot;&quot;</span>
+                    SELECT policy_name, policy_value
+                    FROM system_policies
+                    ORDER BY policy_name
+                &quot;&quot;&quot;;
+
+<span class="nc" id="L72">        try (Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L73">                PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="nc" id="L74">                ResultSet rs = ps.executeQuery()) {</span>
+
+<span class="nc" id="L76">            System.out.println(&quot;\n--- SYSTEM POLICIES ---&quot;);</span>
+<span class="nc" id="L77">            System.out.printf(&quot;%-30s | %-50s%n&quot;, &quot;Policy Name&quot;, &quot;Value&quot;);</span>
+<span class="nc" id="L78">            System.out.println(&quot;-&quot;.repeat(85));</span>
+
+<span class="nc" id="L80">            boolean found = false;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L82">                found = true;</span>
+<span class="nc" id="L83">                System.out.printf(&quot;%-30s | %-50s%n&quot;,</span>
+<span class="nc" id="L84">                        rs.getString(&quot;policy_name&quot;),</span>
+<span class="nc" id="L85">                        rs.getString(&quot;policy_value&quot;));</span>
+            }
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            if (!found) {</span>
+<span class="nc" id="L88">                System.out.println(&quot;(No policies configured)&quot;);</span>
+            }
+<span class="nc" id="L90">            System.out.println();</span>
+<span class="nc" id="L91">        } catch (Exception e) {</span>
+<span class="nc" id="L92">            logger.error(&quot;Error listing policies: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L93">        }</span>
+<span class="nc" id="L94">    }</span>
+
+    public ResultSet getAllPolicies() throws Exception {
+
+<span class="fc" id="L98">        String sql = &quot;&quot;&quot;</span>
+                    SELECT policy_name, policy_value
+                    FROM system_policies
+                    ORDER BY policy_name
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L104">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L105">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L106">        return ps.executeQuery();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

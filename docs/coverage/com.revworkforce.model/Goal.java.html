@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Goal.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.model</a> &gt; <span class="el_source">Goal.java</span></div><h1>Goal.java</h1><pre class="source lang-java linenums">package com.revworkforce.model;
+
+import java.sql.Date;
+
+/**
+ * Represents a performance goal set for an employee.
+ * Maps to the 'goals' table.
+ */
+<span class="fc" id="L9">public class Goal {</span>
+
+    private int goalId;
+    private String employeeId;
+    private int cycleId;
+    private String goalDescription;
+    private Date deadline;
+    private String priority; // High, Medium, Low
+    private String successMetrics;
+    private int progressPercentage;
+    private String status; // PENDING, COMPLETED
+    private String managerComments;
+
+<span class="fc" id="L22">    public int getGoalId() { return goalId; }</span>
+<span class="fc" id="L23">    public void setGoalId(int goalId) { this.goalId = goalId; }</span>
+
+<span class="fc" id="L25">    public String getEmployeeId() { return employeeId; }</span>
+<span class="fc" id="L26">    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }</span>
+
+<span class="fc" id="L28">    public int getCycleId() { return cycleId; }</span>
+<span class="fc" id="L29">    public void setCycleId(int cycleId) { this.cycleId = cycleId; }</span>
+
+<span class="fc" id="L31">    public String getGoalDescription() { return goalDescription; }</span>
+<span class="fc" id="L32">    public void setGoalDescription(String goalDescription) { this.goalDescription = goalDescription; }</span>
+
+<span class="fc" id="L34">    public Date getDeadline() { return deadline; }</span>
+<span class="fc" id="L35">    public void setDeadline(Date deadline) { this.deadline = deadline; }</span>
+
+<span class="fc" id="L37">    public String getPriority() { return priority; }</span>
+<span class="fc" id="L38">    public void setPriority(String priority) { this.priority = priority; }</span>
+
+<span class="fc" id="L40">    public String getSuccessMetrics() { return successMetrics; }</span>
+<span class="fc" id="L41">    public void setSuccessMetrics(String successMetrics) { this.successMetrics = successMetrics; }</span>
+
+<span class="fc" id="L43">    public int getProgressPercentage() { return progressPercentage; }</span>
+<span class="fc" id="L44">    public void setProgressPercentage(int progressPercentage) { this.progressPercentage = progressPercentage; }</span>
+
+<span class="fc" id="L46">    public String getStatus() { return status; }</span>
+<span class="fc" id="L47">    public void setStatus(String status) { this.status = status; }</span>
+
+<span class="fc" id="L49">    public String getManagerComments() { return managerComments; }</span>
+<span class="fc" id="L50">    public void setManagerComments(String managerComments) { this.managerComments = managerComments; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

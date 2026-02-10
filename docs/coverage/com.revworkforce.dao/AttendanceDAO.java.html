@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AttendanceDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.dao</a> &gt; <span class="el_source">AttendanceDAO.java</span></div><h1>AttendanceDAO.java</h1><pre class="source lang-java linenums">package com.revworkforce.dao;
+
+import com.revworkforce.util.DBConnection;
+
+import java.sql.*;
+
+<span class="fc" id="L7">public class AttendanceDAO {</span>
+
+    public boolean hasCheckedIn(String empId, Date date) throws Exception {
+<span class="fc" id="L10">        String sql = &quot;SELECT 1 FROM attendance WHERE employee_id = ? AND attendance_date = ?&quot;;</span>
+<span class="fc" id="L11">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L12">             PreparedStatement ps = con.prepareStatement(sql)) {</span>
+<span class="fc" id="L13">            ps.setString(1, empId);</span>
+<span class="fc" id="L14">            ps.setDate(2, date);</span>
+<span class="fc" id="L15">            return ps.executeQuery().next();</span>
+        }
+    }
+
+    public void checkIn(String empId) throws Exception {
+<span class="fc" id="L20">        String sql = &quot;&quot;&quot;</span>
+            INSERT INTO attendance (employee_id, attendance_date, check_in_time, status)
+            VALUES (?, CURRENT_DATE, CURRENT_TIMESTAMP, 'PRESENT')
+        &quot;&quot;&quot;;
+<span class="fc" id="L24">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L25">             PreparedStatement ps = con.prepareStatement(sql)) {</span>
+<span class="fc" id="L26">            ps.setString(1, empId);</span>
+<span class="fc" id="L27">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L29">    }</span>
+
+    public boolean hasCheckedOut(String empId, Date date) throws Exception {
+<span class="fc" id="L32">        String sql = &quot;SELECT 1 FROM attendance WHERE employee_id = ? AND attendance_date = ? AND check_out_time IS NOT NULL&quot;;</span>
+<span class="fc" id="L33">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L34">             PreparedStatement ps = con.prepareStatement(sql)) {</span>
+<span class="fc" id="L35">            ps.setString(1, empId);</span>
+<span class="fc" id="L36">            ps.setDate(2, date);</span>
+<span class="fc" id="L37">            return ps.executeQuery().next();</span>
+        }
+    }
+
+    public void checkOut(String empId) throws Exception {
+<span class="fc" id="L42">        String sql = &quot;&quot;&quot;</span>
+            UPDATE attendance 
+            SET check_out_time = CURRENT_TIMESTAMP 
+            WHERE employee_id = ? AND attendance_date = CURRENT_DATE
+        &quot;&quot;&quot;;
+<span class="fc" id="L47">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L48">             PreparedStatement ps = con.prepareStatement(sql)) {</span>
+<span class="fc" id="L49">            ps.setString(1, empId);</span>
+<span class="fc" id="L50">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L52">    }</span>
+
+    public ResultSet getAttendanceHistory(String empId) throws Exception {
+<span class="fc" id="L55">        String sql = &quot;SELECT * FROM attendance WHERE employee_id = ? ORDER BY attendance_date DESC&quot;;</span>
+<span class="fc" id="L56">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L57">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L58">        ps.setString(1, empId);</span>
+<span class="fc" id="L59">        return ps.executeQuery();</span>
+    }
+
+    public ResultSet getTeamAttendanceSummary(String managerId) throws Exception {
+<span class="fc" id="L63">        String sql = &quot;&quot;&quot;</span>
+            SELECT a.employee_id,
+                   SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) AS present_days,
+                   SUM(CASE WHEN a.status = 'ABSENT' THEN 1 ELSE 0 END) AS absent_days
+            FROM attendance a
+            JOIN employees e ON a.employee_id = e.employee_id
+            WHERE e.manager_id = ?
+            GROUP BY a.employee_id
+        &quot;&quot;&quot;;
+
+<span class="fc" id="L73">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L74">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L75">        ps.setString(1, managerId);</span>
+<span class="fc" id="L76">        return ps.executeQuery();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AttendanceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">AttendanceService.java</span></div><h1>AttendanceService.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.service;
+
+import com.revworkforce.dao.AttendanceDAO;
+import com.revworkforce.util.DateUtil;
+import com.revworkforce.util.InputUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Date;
+import java.sql.ResultSet;
+
+/**
+ * Service to handle Employee Attendance.
+ * Manages daily check-ins, check-outs, and historical attendance records.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="nc" id="L21">public class AttendanceService {</span>
+
+<span class="fc" id="L23">    private static final Logger logger = LogManager.getLogger(AttendanceService.class);</span>
+
+<span class="fc" id="L25">    private static AttendanceDAO dao = new AttendanceDAO();</span>
+
+    /**
+     * Records an employee's check-in time for the day.
+     * Prevents multiple check-ins on the same day.
+     * 
+     * @param empId The Employee ID.
+     */
+    public static void checkIn(String empId) {
+        try {
+<span class="fc bfc" id="L35" title="All 2 branches covered.">            if (dao.hasCheckedIn(empId, DateUtil.getCurrentDate())) {</span>
+<span class="fc" id="L36">                System.out.println(&quot;You have already checked in today.&quot;);</span>
+            } else {
+<span class="fc" id="L38">                dao.checkIn(empId);</span>
+<span class="fc" id="L39">                AuditService.log(empId, &quot;CREATE&quot;, &quot;ATTENDANCE&quot;, &quot;TODAY&quot;, &quot;Employee checked in&quot;);</span>
+<span class="fc" id="L40">                System.out.println(&quot;Check-in successful at &quot; + DateUtil.getCurrentTimestamp());</span>
+            }
+<span class="fc" id="L42">        } catch (Exception e) {</span>
+<span class="fc" id="L43">            logger.error(&quot;Check-in failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L44">        }</span>
+<span class="fc" id="L45">    }</span>
+
+    /**
+     * Records an employee's check-out time for the day.
+     * Ensures an employee checks out only once per day.
+     * 
+     * @param empId The Employee ID.
+     */
+    public static void checkOut(String empId) {
+        try {
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            if (dao.hasCheckedOut(empId, DateUtil.getCurrentDate())) {</span>
+<span class="fc" id="L56">                System.out.println(&quot;You have already checked out today.&quot;);</span>
+            } else {
+<span class="fc" id="L58">                dao.checkOut(empId);</span>
+<span class="fc" id="L59">                AuditService.log(empId, &quot;UPDATE&quot;, &quot;ATTENDANCE&quot;, &quot;TODAY&quot;, &quot;Employee checked out&quot;);</span>
+<span class="fc" id="L60">                System.out.println(&quot;Check-out successful at &quot; + DateUtil.getCurrentTimestamp());</span>
+            }
+<span class="fc" id="L62">        } catch (Exception e) {</span>
+<span class="fc" id="L63">            logger.error(&quot;Check-out failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L64">        }</span>
+<span class="fc" id="L65">    }</span>
+
+    /**
+     * Displays the attendance history for an employee.
+     * Shows dates, check-in/out times, and daily status.
+     * 
+     * @param empId The Employee ID.
+     */
+    public static void viewMyAttendance(String empId) {
+        try {
+<span class="fc" id="L75">            ResultSet rs = dao.getAttendanceHistory(empId);</span>
+<span class="fc" id="L76">            System.out.println(&quot;\n--- ATTENDANCE HISTORY ---&quot;);</span>
+<span class="fc" id="L77">            System.out.println(String.format(&quot;%-15s %-25s %-25s %-10s&quot;, &quot;Date&quot;, &quot;Check-In&quot;, &quot;Check-Out&quot;, &quot;Status&quot;));</span>
+
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L80">                System.out.println(String.format(&quot;%-15s %-25s %-25s %-10s&quot;,</span>
+<span class="nc" id="L81">                        rs.getDate(&quot;attendance_date&quot;),</span>
+<span class="nc" id="L82">                        DateUtil.formatTimestamp(rs.getTimestamp(&quot;check_in_time&quot;)),</span>
+<span class="nc" id="L83">                        DateUtil.formatTimestamp(rs.getTimestamp(&quot;check_out_time&quot;)),</span>
+<span class="nc" id="L84">                        rs.getString(&quot;status&quot;)));</span>
+            }
+<span class="fc" id="L86">        } catch (Exception e) {</span>
+<span class="fc" id="L87">            logger.error(&quot;Failed to fetch attendance.&quot;, e);</span>
+<span class="fc" id="L88">        }</span>
+<span class="fc" id="L89">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditLogDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.dao</a> &gt; <span class="el_source">AuditLogDAO.java</span></div><h1>AuditLogDAO.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.dao;
+
+import com.revworkforce.util.DBConnection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+/**
+ * DAO for System Audit Logging.
+ * Records critical actions to the database for security and tracking.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="fc" id="L21">public class AuditLogDAO {</span>
+
+<span class="fc" id="L23">    private static final Logger logger = LogManager.getLogger(AuditLogDAO.class);</span>
+
+    public void log(
+            String employeeId,
+            String action,
+            String table,
+            String recordId,
+            String description) throws Exception {
+
+<span class="fc" id="L32">        String sql = &quot;&quot;&quot;</span>
+                    INSERT INTO audit_logs
+                    (employee_id, action, table_name, record_id, new_value)
+                    VALUES (?, ?, ?, ?, ?)
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L38">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L39">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L41">            ps.setString(1, employeeId);</span>
+<span class="fc" id="L42">            ps.setString(2, action);</span>
+<span class="fc" id="L43">            ps.setString(3, table);</span>
+<span class="fc" id="L44">            ps.setString(4, recordId);</span>
+<span class="fc" id="L45">            ps.setString(5, description);</span>
+<span class="fc" id="L46">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L48">    }</span>
+
+    /**
+     * Retrieves and prints the latest system audit logs.
+     * Joins with Employee table to show readable names.
+     */
+    public void printAuditLogs() {
+
+<span class="fc" id="L56">        String sql = &quot;&quot;&quot;</span>
+                    SELECT a.employee_id, e.first_name, e.last_name, a.action, a.table_name,
+                           a.record_id, a.new_value, a.created_at
+                    FROM audit_logs a
+                    LEFT JOIN employees e ON a.employee_id = e.employee_id
+                    ORDER BY a.created_at DESC
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L64">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L65">                PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L66">                ResultSet rs = ps.executeQuery()) {</span>
+
+<span class="fc" id="L68">            System.out.println(&quot;\n--- SYSTEM AUDIT LOGS ---&quot;);</span>
+<span class="fc" id="L69">            System.out.printf(&quot;%-10s | %-15s | %-10s | %-15s | %-10s | %-30s | %-20s%n&quot;,</span>
+                    &quot;Emp ID&quot;, &quot;Name&quot;, &quot;Action&quot;, &quot;Table&quot;, &quot;Record ID&quot;, &quot;Description&quot;, &quot;Time&quot;);
+<span class="fc" id="L71">            System.out.println(&quot;-&quot;.repeat(125));</span>
+
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L74">                String name = rs.getString(&quot;first_name&quot;) + &quot; &quot; + rs.getString(&quot;last_name&quot;);</span>
+
+<span class="fc" id="L76">                System.out.printf(&quot;%-10s | %-15s | %-10s | %-15s | %-10s | %-30s | %s%n&quot;,</span>
+<span class="fc" id="L77">                        rs.getString(&quot;employee_id&quot;),</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">                        (name.equals(&quot;null null&quot;) ? &quot;Unknown&quot; : name),</span>
+<span class="fc" id="L79">                        rs.getString(&quot;action&quot;),</span>
+<span class="fc" id="L80">                        rs.getString(&quot;table_name&quot;),</span>
+<span class="fc" id="L81">                        rs.getString(&quot;record_id&quot;),</span>
+<span class="fc" id="L82">                        rs.getString(&quot;new_value&quot;),</span>
+<span class="fc" id="L83">                        rs.getTimestamp(&quot;created_at&quot;));</span>
+<span class="fc" id="L84">            }</span>
+<span class="fc" id="L85">            System.out.println();</span>
+<span class="nc" id="L86">        } catch (Exception e) {</span>
+<span class="nc" id="L87">            logger.error(&quot;Unable to fetch audit logs: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L88">        }</span>
+<span class="fc" id="L89">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

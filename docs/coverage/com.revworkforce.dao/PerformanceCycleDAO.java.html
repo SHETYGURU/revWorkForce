@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PerformanceCycleDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.dao</a> &gt; <span class="el_source">PerformanceCycleDAO.java</span></div><h1>PerformanceCycleDAO.java</h1><pre class="source lang-java linenums">package com.revworkforce.dao;
+
+import com.revworkforce.util.DBConnection;
+
+import java.sql.*;
+
+<span class="fc" id="L7">public class PerformanceCycleDAO {</span>
+
+    public void createCycle(
+            String cycleName,
+            Date startDate,
+            Date endDate
+    ) throws Exception {
+
+<span class="fc" id="L15">        String sql = &quot;&quot;&quot;</span>
+            INSERT INTO performance_cycles
+            (cycle_name, start_date, end_date, is_active)
+            VALUES (?, ?, ?, 1)
+        &quot;&quot;&quot;;
+
+<span class="fc" id="L21">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L22">             PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L24">            ps.setString(1, cycleName);</span>
+<span class="fc" id="L25">            ps.setDate(2, startDate);</span>
+<span class="fc" id="L26">            ps.setDate(3, endDate);</span>
+<span class="fc" id="L27">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L29">    }</span>
+
+    public void closeCycle(int cycleId) throws Exception {
+
+<span class="fc" id="L33">        String sql = &quot;&quot;&quot;</span>
+            UPDATE performance_cycles
+            SET is_active = 0
+            WHERE cycle_id = ?
+        &quot;&quot;&quot;;
+
+<span class="fc" id="L39">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L40">             PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L42">            ps.setInt(1, cycleId);</span>
+<span class="fc" id="L43">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L45">    }</span>
+
+    public ResultSet getAllCycles() throws Exception {
+
+<span class="fc" id="L49">        String sql = &quot;&quot;&quot;</span>
+            SELECT cycle_id, cycle_name, start_date, end_date, is_active
+            FROM performance_cycles
+            ORDER BY start_date DESC
+        &quot;&quot;&quot;;
+
+<span class="fc" id="L55">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L56">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L57">        return ps.executeQuery();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.service;
+
+import com.revworkforce.context.SessionContext;
+import com.revworkforce.dao.EmployeeDAO;
+import com.revworkforce.model.Employee;
+import com.revworkforce.util.PasswordUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.ResultSet;
+
+/**
+ * Service class for handling Authentication and Security.
+ * Manages login, password verification, account locking, and session
+ * initialization.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="nc" id="L22">public class AuthService {</span>
+
+<span class="fc" id="L24">    private static final Logger logger = LogManager.getLogger(AuthService.class);</span>
+
+    private static final int MAX_ATTEMPTS = 3;
+<span class="fc" id="L27">    private static EmployeeDAO dao = new EmployeeDAO();</span>
+
+    /**
+     * Authenticates a user based on Employee ID and Password.
+     * Checks for account locks and tracks failed attempts.
+     *
+     * @param empId    The Employee ID.
+     * @param password The raw password input.
+     * @return true if login is successful, false otherwise.
+     */
+    public static boolean login(String empId, String password) {
+
+        try {
+<span class="fc" id="L40">            ResultSet rs = dao.getAuthDetails(empId);</span>
+
+<span class="fc bfc" id="L42" title="All 2 branches covered.">            if (!rs.next()) {</span>
+<span class="fc" id="L43">                System.out.println(&quot;Invalid credentials&quot;);</span>
+<span class="fc" id="L44">                logger.warn(&quot;Failed login attempt - User not found: {}&quot;, empId);</span>
+<span class="fc" id="L45">                return false;</span>
+            }
+
+<span class="fc bfc" id="L48" title="All 2 branches covered.">            if (rs.getInt(&quot;account_locked&quot;) == 1) {</span>
+<span class="fc" id="L49">                System.out.println(&quot;Account is locked. Please contact admin.&quot;);</span>
+<span class="fc" id="L50">                logger.warn(&quot;Failed login attempt - Account Locked: {}&quot;, empId);</span>
+<span class="fc" id="L51">                return false;</span>
+            }
+
+<span class="fc" id="L54">            String hash = rs.getString(&quot;password_hash&quot;);</span>
+<span class="fc" id="L55">            int failedAttempts = rs.getInt(&quot;failed_login_attempts&quot;);</span>
+
+            // Verify Password
+<span class="fc bfc" id="L58" title="All 2 branches covered.">            if (!PasswordUtil.verifyPassword(password, hash)) {</span>
+<span class="fc" id="L59">                handleFailedLogin(empId, failedAttempts);</span>
+<span class="fc" id="L60">                return false;</span>
+            }
+
+            // SUCCESS
+<span class="fc" id="L64">            dao.recordSuccessfulLogin(empId);</span>
+<span class="fc" id="L65">            Employee emp = dao.getEmployeeById(empId);</span>
+<span class="fc" id="L66">            SessionContext.set(emp);</span>
+<span class="fc" id="L67">            logger.info(&quot;User logged in successfully: {}&quot;, empId);</span>
+<span class="fc" id="L68">            AuditService.log(empId, &quot;LOGIN&quot;, &quot;SESSION&quot;, &quot;N/A&quot;, &quot;User logged in successfully&quot;);</span>
+
+            // Show Unread Notifications
+<span class="fc" id="L71">            int unreadCount = NotificationService.getUnreadCount(empId);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (unreadCount &gt; 0) {</span>
+<span class="fc" id="L73">                System.out.println(&quot;\n**************************************************&quot;);</span>
+<span class="fc" id="L74">                System.out.println(&quot; NOTICE: You have &quot; + unreadCount + &quot; unread notification(s).&quot;);</span>
+<span class="fc" id="L75">                System.out.println(&quot;**************************************************\n&quot;);</span>
+            }
+
+<span class="fc" id="L78">            return true;</span>
+
+<span class="nc" id="L80">        } catch (Exception e) {</span>
+<span class="nc" id="L81">            logger.error(&quot;System Error during login: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L82">            logger.error(&quot;System Error during login for user: {}&quot;, empId, e);</span>
+<span class="nc" id="L83">            return false;</span>
+        }
+    }
+
+    /*
+     * private helper to handle failed login logic
+     */
+    private static void handleFailedLogin(String empId, int currentFailures) throws Exception {
+<span class="fc" id="L91">        dao.recordFailedLogin(empId);</span>
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (currentFailures + 1 &gt;= MAX_ATTEMPTS) {</span>
+<span class="fc" id="L94">            dao.lockAccount(empId);</span>
+<span class="fc" id="L95">            System.out.println(&quot;Account locked due to multiple failed attempts.&quot;);</span>
+<span class="fc" id="L96">            logger.warn(&quot;Account locked due to max failed attempts: {}&quot;, empId);</span>
+<span class="fc" id="L97">            AuditService.log(empId, &quot;LOCKOUT&quot;, &quot;ACCESS_CONTROL&quot;, &quot;N/A&quot;, &quot;Account locked due to max failed attempts&quot;);</span>
+        } else {
+<span class="fc" id="L99">            System.out.println(&quot;Invalid credentials&quot;);</span>
+<span class="fc" id="L100">            System.out.println(&quot;Attempts remaining: &quot; + (MAX_ATTEMPTS - (currentFailures + 1)));</span>
+<span class="fc" id="L101">            logger.warn(&quot;Failed login attempt - Incorrect Password: {}&quot;, empId);</span>
+        }
+<span class="fc" id="L103">    }</span>
+
+    /**
+     * Changes the password for a logged-in user.
+     * Enforces security by verifying the old password before allowing a change.
+     *
+     * @param empId       The employee ID.
+     * @param oldPassword The current password provided by the user.
+     * @param newPassword The new password to be set.
+     * @return true if change successful, false otherwise.
+     */
+    public static boolean changePassword(String empId, String oldPassword, String newPassword) {
+        try {
+            // 1. Verify Old Password
+<span class="fc" id="L117">            ResultSet rs = dao.getAuthDetails(empId);</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">            if (rs.next()) {</span>
+<span class="fc" id="L119">                String hash = rs.getString(&quot;password_hash&quot;);</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">                if (!PasswordUtil.verifyPassword(oldPassword, hash)) {</span>
+<span class="nc" id="L121">                    System.out.println(&quot;Incorrect current password.&quot;);</span>
+<span class="nc" id="L122">                    logger.warn(&quot;Password change failed - Incorrect old password: {}&quot;, empId);</span>
+<span class="nc" id="L123">                    return false;</span>
+                }
+
+                // 2. Hash New Password
+<span class="fc" id="L127">                String newHash = PasswordUtil.hashPassword(newPassword);</span>
+
+                // 3. Update Password
+<span class="fc" id="L130">                dao.updatePassword(empId, newHash);</span>
+<span class="fc" id="L131">                logger.info(&quot;Password changed successfully for user: {}&quot;, empId);</span>
+<span class="fc" id="L132">                return true;</span>
+            }
+<span class="fc" id="L134">            return false;</span>
+<span class="fc" id="L135">        } catch (Exception e) {</span>
+<span class="fc" id="L136">            logger.error(&quot;Error changing password: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L137">            logger.error(&quot;Error changing password for user: {}&quot;, empId, e);</span>
+<span class="fc" id="L138">            return false;</span>
+        }
+    }
+
+    /**
+     * Initiates the Forgot Password recovery flow.
+     * prompts for Employee ID and Security Answer to reset the password.
+     */
+    public static void forgotPasswordFlow() {
+        try {
+<span class="fc" id="L148">            System.out.println(&quot;\n--- FORGOT PASSWORD RECOVERY ---&quot;);</span>
+<span class="fc" id="L149">            String empId = com.revworkforce.util.InputUtil.readString(&quot;Enter Employee ID: &quot;);</span>
+
+            // Fetch Security Question
+<span class="fc" id="L152">            ResultSet rs = dao.getSecurityDetails(empId);</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">            if (rs.next()) {</span>
+<span class="fc" id="L154">                String question = rs.getString(&quot;question_text&quot;);</span>
+<span class="fc" id="L155">                String storedAnswerHash = rs.getString(&quot;answer_hash&quot;);</span>
+
+<span class="fc" id="L157">                System.out.println(&quot;Security Question: &quot; + question);</span>
+<span class="fc" id="L158">                String answer = com.revworkforce.util.InputUtil.readString(&quot;Answer: &quot;);</span>
+
+                // Verify Answer
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">                if (PasswordUtil.verifyPassword(answer, storedAnswerHash)) {</span>
+<span class="fc" id="L162">                    System.out.println(&quot;Answer Correct!&quot;);</span>
+
+<span class="fc" id="L164">                    String newPass = com.revworkforce.util.InputUtil.readString(&quot;Enter New Password: &quot;);</span>
+<span class="fc" id="L165">                    String confirmPass = com.revworkforce.util.InputUtil.readString(&quot;Confirm New Password: &quot;);</span>
+
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">                    if (!newPass.equals(confirmPass)) {</span>
+<span class="nc" id="L168">                        System.out.println(&quot;Passwords do not match. Recovery failed.&quot;);</span>
+<span class="nc" id="L169">                        logger.warn(&quot;Password recovery failed - Passwords do not match: {}&quot;, empId);</span>
+<span class="nc" id="L170">                        return;</span>
+                    }
+
+<span class="fc" id="L173">                    String newHash = PasswordUtil.hashPassword(newPass);</span>
+<span class="fc" id="L174">                    dao.updatePassword(empId, newHash);</span>
+<span class="fc" id="L175">                    System.out.println(&quot;Password reset successfully. Please login.&quot;);</span>
+<span class="fc" id="L176">                    logger.info(&quot;Password recovered/reset successfully for user: {}&quot;, empId);</span>
+<span class="fc" id="L177">                    AuditService.log(empId, &quot;RECOVER&quot;, &quot;ACCESS_CONTROL&quot;, &quot;N/A&quot;,</span>
+                            &quot;Password recovered via security question&quot;);
+<span class="fc" id="L179">                } else {</span>
+<span class="nc" id="L180">                    System.out.println(&quot;Incorrect Answer.&quot;);</span>
+<span class="nc" id="L181">                    logger.warn(&quot;Password recovery failed - Incorrect Security Answer: {}&quot;, empId);</span>
+                }
+
+<span class="fc" id="L184">            } else {</span>
+<span class="nc" id="L185">                System.out.println(&quot;No security details found for this user. Please contact Admin.&quot;);</span>
+<span class="nc" id="L186">                logger.warn(&quot;Password recovery failed - No security details found: {}&quot;, empId);</span>
+            }
+
+<span class="nc" id="L189">        } catch (Exception e) {</span>
+<span class="nc" id="L190">            logger.error(&quot;Error during password recovery: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L191">            logger.error(&quot;Error during password recovery flow&quot;, e);</span>
+<span class="fc" id="L192">        }</span>
+<span class="fc" id="L193">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">AdminService.java</span></div><h1>AdminService.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.service;
+
+import com.revworkforce.dao.AuditLogDAO;
+import com.revworkforce.dao.EmployeeDAO;
+import com.revworkforce.util.DBConnection;
+import com.revworkforce.util.InputUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import com.revworkforce.model.Employee;
+
+/**
+ * Service class for Administrator operations.
+ * Handles extensive user management, system configuration, and high-level
+ * overrides.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="nc" id="L24">public class AdminService {</span>
+
+<span class="fc" id="L26">    private static final Logger logger = LogManager.getLogger(AdminService.class);</span>
+
+<span class="fc" id="L28">    private static EmployeeDAO employeeDAO = new EmployeeDAO();</span>
+<span class="fc" id="L29">    private static AuditLogDAO auditDAO = new AuditLogDAO();</span>
+<span class="fc" id="L30">    private static com.revworkforce.dao.DepartmentDAO departmentDAO = new com.revworkforce.dao.DepartmentDAO();</span>
+<span class="fc" id="L31">    private static com.revworkforce.dao.DesignationDAO designationDAO = new com.revworkforce.dao.DesignationDAO();</span>
+
+    /*
+     * =============================================================================
+     * ======
+     * EMPLOYEE MANAGEMENT
+     * =============================================================================
+     * ======
+     */
+
+    private static String getAdminId() {
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        return com.revworkforce.context.SessionContext.get() != null</span>
+<span class="fc" id="L43">                ? com.revworkforce.context.SessionContext.get().getEmployeeId()</span>
+<span class="nc" id="L44">                : &quot;ADMIN001&quot;; // Fallback for safety</span>
+    }
+
+    /**
+     * Initiates the employee onboarding process.
+     * Collects details via modular prompts to create a new employee record.
+     */
+    public static void addEmployee() {
+        try {
+<span class="fc" id="L53">            System.out.println(&quot;\n--- ADD NEW EMPLOYEE ---&quot;);</span>
+<span class="fc" id="L54">            Employee emp = new Employee();</span>
+
+            // 1. Role &amp; ID Generation
+<span class="fc" id="L57">            boolean isManager = promptRole();</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">            String prefix = isManager ? &quot;MGR&quot; : &quot;EMP&quot;;</span>
+<span class="fc" id="L59">            emp.setEmployeeId(employeeDAO.getNextId(prefix));</span>
+<span class="fc" id="L60">            System.out.println(&quot;Generated Employee ID: &quot; + emp.getEmployeeId());</span>
+
+            // 2. Personal Info
+<span class="fc" id="L63">            promptPersonalInfo(emp);</span>
+
+            // 3. Joining Date
+<span class="fc" id="L66">            emp.setJoiningDate(promptJoiningDate());</span>
+
+            // 4. Professional Info
+<span class="fc" id="L69">            promptProfessionalInfo(emp, isManager);</span>
+
+            // 5. Default Password &amp; Salary
+<span class="fc" id="L72">            emp.setPasswordHash(com.revworkforce.util.PasswordUtil.hashPassword(&quot;password&quot;));</span>
+<span class="fc" id="L73">            emp.setSalary(promptSalary());</span>
+
+<span class="fc" id="L75">            employeeDAO.insertEmployee(emp);</span>
+
+<span class="fc" id="L77">            AuditService.log(getAdminId(), &quot;CREATE&quot;, &quot;EMPLOYEES&quot;, emp.getEmployeeId(), &quot;Admin onboarding completed&quot;);</span>
+<span class="fc" id="L78">            logger.info(&quot;New employee onboarding completed: {} ({})&quot;, emp.getFirstName(), emp.getEmployeeId());</span>
+<span class="fc" id="L79">            System.out.println(</span>
+<span class="fc" id="L80">                    &quot;Employee &quot; + emp.getFirstName() + &quot; (&quot; + emp.getEmployeeId()</span>
+                            + &quot;) added successfully. Default password is 'password'.&quot;);
+
+<span class="fc" id="L83">        } catch (Exception e) {</span>
+<span class="fc" id="L84">            logger.error(&quot;Failed to add employee: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L85">        }</span>
+<span class="fc" id="L86">    }</span>
+
+    private static boolean promptRole() {
+<span class="fc" id="L89">        String roleInput = InputUtil.readValidatedString(</span>
+                &quot;Is this employee a Manager? (Y/N): &quot;,
+<span class="nc bnc" id="L91" title="All 4 branches missed.">                s -&gt; s.equalsIgnoreCase(&quot;Y&quot;) || s.equalsIgnoreCase(&quot;N&quot;),</span>
+                &quot;Invalid input. Please enter 'Y' or 'N'.&quot;);
+<span class="fc" id="L93">        return roleInput.equalsIgnoreCase(&quot;Y&quot;);</span>
+    }
+
+    private static void promptPersonalInfo(Employee emp) {
+<span class="fc" id="L97">        emp.setFirstName(</span>
+<span class="pc bnc" id="L98" title="All 2 branches missed.">                InputUtil.readValidatedString(&quot;First Name: &quot;, s -&gt; !s.isEmpty(), &quot;First Name cannot be empty.&quot;));</span>
+<span class="pc bnc" id="L99" title="All 2 branches missed.">        emp.setLastName(InputUtil.readValidatedString(&quot;Last Name: &quot;, s -&gt; !s.isEmpty(), &quot;Last Name cannot be empty.&quot;));</span>
+
+<span class="fc" id="L101">        emp.setEmail(InputUtil.readValidatedString(&quot;Email: &quot;, AdminService::validateEmail));</span>
+
+<span class="fc" id="L103">        emp.setPhone(InputUtil.readValidatedString(&quot;Phone: &quot;, AdminService::validatePhone));</span>
+
+<span class="pc bnc" id="L105" title="All 2 branches missed.">        emp.setAddress(InputUtil.readValidatedString(&quot;Address: &quot;, s -&gt; !s.isEmpty(), &quot;Address cannot be empty.&quot;));</span>
+<span class="pc bnc" id="L106" title="All 2 branches missed.">        emp.setEmergencyContact(InputUtil.readValidatedString(&quot;Emergency Contact: &quot;, s -&gt; !s.isEmpty(),</span>
+                &quot;Emergency Contact cannot be empty.&quot;));
+
+<span class="fc" id="L109">        String dobStr = InputUtil.readValidatedString(&quot;DOB (YYYY-MM-DD): &quot;, AdminService::validateDateFormat);</span>
+<span class="fc" id="L110">        emp.setDateOfBirth(java.sql.Date.valueOf(dobStr));</span>
+<span class="fc" id="L111">    }</span>
+
+    private static java.sql.Date promptJoiningDate() {
+<span class="fc" id="L114">        System.out.println(&quot;Joining Date: 1. Today  2. Enter Manually&quot;);</span>
+<span class="fc" id="L115">        int dateChoice = InputUtil.readInt(&quot;Select Option: &quot;);</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (dateChoice == 1) {</span>
+<span class="fc" id="L117">            return java.sql.Date.valueOf(java.time.LocalDate.now());</span>
+        } else {
+<span class="nc" id="L119">            String dateStr = InputUtil.readValidatedString(&quot;Enter Date (YYYY-MM-DD): &quot;,</span>
+                    AdminService::validateDateFormat);
+<span class="nc" id="L121">            return java.sql.Date.valueOf(dateStr);</span>
+        }
+    }
+
+    private static void promptProfessionalInfo(Employee emp, boolean isManagerRole) {
+<span class="fc" id="L126">        departmentDAO.printDepartments();</span>
+<span class="fc" id="L127">        String deptStr = InputUtil.readValidatedString(&quot;Department ID: &quot;, AdminService::validateDepartment);</span>
+<span class="fc" id="L128">        emp.setDepartmentId(Integer.parseInt(deptStr));</span>
+
+<span class="fc" id="L130">        designationDAO.printDesignations(isManagerRole);</span>
+<span class="fc" id="L131">        String desigStr = InputUtil.readValidatedString(&quot;Designation ID: &quot;,</span>
+<span class="nc" id="L132">                input -&gt; validateDesignation(input, isManagerRole));</span>
+<span class="fc" id="L133">        emp.setDesignationId(Integer.parseInt(desigStr));</span>
+
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        if (!&quot;MGR&quot;.equals(emp.getEmployeeId().substring(0, 3))) {</span>
+<span class="fc" id="L136">            String mgr = InputUtil.readString(&quot;Manager ID (Press Enter to skip): &quot;);</span>
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">            emp.setManagerId(mgr.isEmpty() ? null : mgr);</span>
+        }
+<span class="fc" id="L139">    }</span>
+
+    private static Double promptSalary() {
+<span class="fc" id="L142">        String salaryInput = InputUtil.readValidatedString(&quot;Salary: &quot;, s -&gt; {</span>
+            try {
+<span class="nc" id="L144">                Double.parseDouble(s);</span>
+<span class="nc" id="L145">                return true;</span>
+<span class="nc" id="L146">            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L147">                return false;</span>
+            }
+        }, &quot;Invalid salary. Please enter a number.&quot;);
+<span class="fc" id="L150">        return Double.parseDouble(salaryInput);</span>
+    }
+
+    /*
+     * =============================================================================
+     * ======
+     * VALIDATION METHODS
+     * =============================================================================
+     * ======
+     */
+
+    /**
+     * Validates email format and uniqueness.
+     * 
+     * @param input Email to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validateEmail(String input) {
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (!com.revworkforce.util.ValidationUtil.isValidEmail(input))</span>
+<span class="fc" id="L169">            return &quot;Invalid email format.&quot;;</span>
+        try {
+<span class="fc bfc" id="L171" title="All 2 branches covered.">            if (employeeDAO.isEmailExists(input))</span>
+<span class="fc" id="L172">                return &quot;Email already exists.&quot;;</span>
+<span class="fc" id="L173">        } catch (Exception e) {</span>
+<span class="fc" id="L174">            return &quot;Error checking email uniqueness: &quot; + e.getMessage();</span>
+<span class="fc" id="L175">        }</span>
+<span class="fc" id="L176">        return null;</span>
+    }
+
+    /**
+     * Validates phone format and uniqueness.
+     * 
+     * @param input Phone to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validatePhone(String input) {
+<span class="fc bfc" id="L186" title="All 2 branches covered.">        if (!com.revworkforce.util.ValidationUtil.isValidPhone(input))</span>
+<span class="fc" id="L187">            return &quot;Phone must be 10 digits.&quot;;</span>
+        try {
+<span class="fc bfc" id="L189" title="All 2 branches covered.">            if (employeeDAO.isPhoneExists(input))</span>
+<span class="fc" id="L190">                return &quot;Phone number already exists.&quot;;</span>
+<span class="fc" id="L191">        } catch (Exception e) {</span>
+<span class="fc" id="L192">            return &quot;Error checking phone uniqueness: &quot; + e.getMessage();</span>
+<span class="fc" id="L193">        }</span>
+<span class="fc" id="L194">        return null;</span>
+    }
+
+    /**
+     * Validates date format (YYYY-MM-DD).
+     * 
+     * @param input Date string to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validateDateFormat(String input) {
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        if (!input.matches(&quot;\\d{4}-\\d{2}-\\d{2}&quot;))</span>
+<span class="fc" id="L205">            return &quot;Invalid date format. Use YYYY-MM-DD.&quot;;</span>
+<span class="fc" id="L206">        return null;</span>
+    }
+
+    /**
+     * Validates department ID exists.
+     * 
+     * @param input Department ID to validate
+     * @return Error message if invalid, null if valid
+     */
+    static String validateDepartment(String input) {
+        try {
+<span class="fc bfc" id="L217" title="All 2 branches covered.">            if (departmentDAO.isDepartmentIdExists(input))</span>
+<span class="fc" id="L218">                return null;</span>
+<span class="fc" id="L219">            return &quot;Invalid Department ID.&quot;;</span>
+<span class="fc" id="L220">        } catch (Exception e) {</span>
+<span class="fc" id="L221">            return &quot;Error: &quot; + e.getMessage();</span>
+        }
+    }
+
+    /**
+     * Validates designation ID and role match.
+     * 
+     * @param input         Designation ID to validate
+     * @param isManagerRole Whether this is for a manager role
+     * @return Error message if invalid, null if valid
+     */
+    static String validateDesignation(String input, boolean isManagerRole) {
+        try {
+<span class="fc bfc" id="L234" title="All 2 branches covered.">            if (!designationDAO.isDesignationIdExists(input))</span>
+<span class="fc" id="L235">                return &quot;Invalid Designation ID.&quot;;</span>
+<span class="fc bfc" id="L236" title="All 2 branches covered.">            if (!designationDAO.isDesignationMatchRole(input, isManagerRole))</span>
+<span class="fc" id="L237">                return &quot;Invalid Designation for role.&quot;;</span>
+<span class="fc" id="L238">            return null;</span>
+<span class="fc" id="L239">        } catch (Exception e) {</span>
+<span class="fc" id="L240">            return &quot;Error: &quot; + e.getMessage();</span>
+        }
+    }
+
+    /**
+     * 
+     * Updates an existing employee's details.
+     * Allows modification of contact information and professional details
+     * (Department, Designation, Salary).
+     */
+    public static void updateEmployee() {
+        try {
+<span class="fc" id="L252">            System.out.println(&quot;\n--- UPDATE EMPLOYEE ---&quot;);</span>
+<span class="fc" id="L253">            String id = InputUtil.readString(&quot;Employee ID to Update: &quot;);</span>
+
+<span class="fc" id="L255">            System.out.println(&quot;1. Update Contact Info (Phone, Address)&quot;);</span>
+<span class="fc" id="L256">            System.out.println(&quot;2. Update Professional Info (Dept, Desig, Salary)&quot;);</span>
+<span class="fc" id="L257">            int choice = InputUtil.readInt(&quot;Select Option: &quot;);</span>
+
+<span class="fc bfc" id="L259" title="All 2 branches covered.">            if (choice == 1) {</span>
+<span class="fc" id="L260">                String phone = InputUtil.readValidatedString(&quot;New Phone: &quot;, AdminService::validatePhone);</span>
+
+<span class="pc bnc" id="L262" title="All 2 branches missed.">                String addr = InputUtil.readValidatedString(&quot;New Address: &quot;, s -&gt; !s.isEmpty(),</span>
+                        &quot;Address cannot be empty.&quot;);
+<span class="pc bnc" id="L264" title="All 2 branches missed.">                String emg = InputUtil.readValidatedString(&quot;New Emergency Contact: &quot;, s -&gt; !s.isEmpty(),</span>
+                        &quot;Emergency Contact cannot be empty.&quot;);
+
+<span class="fc" id="L267">                employeeDAO.updateProfile(id, phone, addr, emg);</span>
+<span class="fc" id="L268">                AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;EMPLOYEES&quot;, &quot;Phone&quot;, id, &quot;Updated Phone&quot;);</span>
+<span class="fc" id="L269">                AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;EMPLOYEES&quot;, &quot;Emergency&quot;, id, &quot;Updated Emergency Contact&quot;);</span>
+<span class="fc" id="L270">                logger.info(&quot;Employee contact info updated for: {}&quot;, id);</span>
+<span class="fc" id="L271">                System.out.println(&quot;Contact info updated successfully&quot;);</span>
+
+<span class="fc bfc" id="L273" title="All 2 branches covered.">            } else if (choice == 2) {</span>
+<span class="fc" id="L274">                String dept = InputUtil.readString(&quot;New Department ID: &quot;);</span>
+<span class="fc" id="L275">                String desig = InputUtil.readString(&quot;New Designation ID: &quot;);</span>
+<span class="fc" id="L276">                String mgr = InputUtil.readString(&quot;New Manager ID: &quot;);</span>
+<span class="fc" id="L277">                double salary = Double.parseDouble(InputUtil.readString(&quot;New Salary: &quot;));</span>
+
+<span class="fc" id="L279">                employeeDAO.updateProfessionalDetails(id, dept, desig, salary, mgr);</span>
+<span class="fc" id="L280">                AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;EMPLOYEES&quot;, &quot;Dept/Desig&quot;, id, &quot;Updated professional details&quot;);</span>
+<span class="fc" id="L281">                logger.info(&quot;Employee professional details updated for: {}&quot;, id);</span>
+<span class="fc" id="L282">                System.out.println(&quot;Professional info updated successfully&quot;);</span>
+<span class="fc" id="L283">            } else {</span>
+<span class="fc" id="L284">                System.out.println(&quot;Invalid option.&quot;);</span>
+            }
+
+<span class="fc" id="L287">        } catch (Exception e) {</span>
+<span class="fc" id="L288">            logger.error(&quot;Update failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L289">        }</span>
+<span class="fc" id="L290">    }</span>
+
+    public static void viewAllEmployees() {
+<span class="fc" id="L293">        employeeDAO.printAllEmployees();</span>
+<span class="fc" id="L294">    }</span>
+
+    public static void toggleEmployeeStatus() {
+        try {
+<span class="fc" id="L298">            String empId = InputUtil.readString(&quot;Employee ID to Toggle: &quot;);</span>
+<span class="fc" id="L299">            employeeDAO.toggleStatus(empId);</span>
+<span class="fc" id="L300">            AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;EMPLOYEES&quot;, empId, &quot;Status toggled&quot;);</span>
+<span class="fc" id="L301">            logger.info(&quot;Employee status toggled for: {}&quot;, empId);</span>
+<span class="fc" id="L302">            System.out.println(&quot;Employee status updated.&quot;);</span>
+<span class="nc" id="L303">        } catch (Exception e) {</span>
+<span class="nc" id="L304">            logger.error(&quot;Failed to toggle status: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L305">        }</span>
+<span class="fc" id="L306">    }</span>
+
+    /**
+     * Assigns or changes the reporting manager for an employee.
+     */
+    public static void assignManager() {
+        try {
+<span class="fc" id="L313">            String empId = InputUtil.readString(&quot;Employee ID: &quot;);</span>
+<span class="fc" id="L314">            String mgrId = InputUtil.readString(&quot;New Manager ID: &quot;);</span>
+<span class="fc" id="L315">            employeeDAO.assignManager(empId, mgrId);</span>
+<span class="fc" id="L316">            AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;EMPLOYEES&quot;, empId, &quot;Manager changed to &quot; + mgrId);</span>
+<span class="fc" id="L317">            logger.info(&quot;Manager assigned for employee {}: New Manager {}&quot;, empId, mgrId);</span>
+<span class="fc" id="L318">            System.out.println(&quot;Manager assigned successfully.&quot;);</span>
+<span class="fc" id="L319">        } catch (Exception e) {</span>
+<span class="fc" id="L320">            logger.error(&quot;Failed to assign manager: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L321">        }</span>
+<span class="fc" id="L322">    }</span>
+
+    public static void searchEmployees() {
+<span class="fc" id="L325">        EmployeeService.employeeDirectory();</span>
+<span class="fc" id="L326">    }</span>
+
+    /**
+     * Unlocks an employee's account by resetting failed login attempts.
+     * This is an administrative override for security lockouts.
+     */
+    public static void unlockEmployeeAccount() {
+<span class="nc" id="L333">        String empId = InputUtil.readString(&quot;Employee ID to unlock: &quot;);</span>
+        try {
+<span class="nc" id="L335">            String sql = &quot;&quot;&quot;</span>
+                        UPDATE employees
+                        SET account_locked = 0,
+                            failed_login_attempts = 0
+                        WHERE employee_id = ?
+                    &quot;&quot;&quot;;
+<span class="nc" id="L341">            try (Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L342">                    PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="nc" id="L344">                ps.setString(1, empId);</span>
+<span class="nc" id="L345">                int rows = ps.executeUpdate();</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">                if (rows &gt; 0) {</span>
+<span class="nc" id="L347">                    AuditService.log(getAdminId(), &quot;UNLOCK&quot;, &quot;EMPLOYEES&quot;, empId, &quot;Account unlocked&quot;);</span>
+<span class="nc" id="L348">                    logger.info(&quot;Account unlocked for employee: {}&quot;, empId);</span>
+<span class="nc" id="L349">                    System.out.println(&quot;Account unlocked successfully.&quot;);</span>
+                } else {
+<span class="nc" id="L351">                    System.out.println(&quot;Employee not found.&quot;);</span>
+                }
+            }
+<span class="nc" id="L354">        } catch (Exception e) {</span>
+<span class="nc" id="L355">            logger.error(&quot;Unlock failed: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L356">        }</span>
+<span class="nc" id="L357">    }</span>
+
+    /**
+     * Resets an employee's password to a new value provided by the admin.
+     * The new password is immediately hashed before storage.
+     */
+    public static void resetUserPassword() {
+<span class="fc" id="L364">        String empId = InputUtil.readString(&quot;Employee ID to Reset Password: &quot;);</span>
+        try {
+<span class="fc" id="L366">            System.out.println(&quot;Enter new password:&quot;);</span>
+<span class="fc" id="L367">            String newPass = InputUtil.readString(&quot;New Password: &quot;);</span>
+<span class="fc bfc" id="L368" title="All 2 branches covered.">            if (newPass.isEmpty()) {</span>
+<span class="fc" id="L369">                System.out.println(&quot;Password cannot be empty.&quot;);</span>
+<span class="fc" id="L370">                return;</span>
+            }
+
+<span class="fc" id="L373">            String hash = com.revworkforce.util.PasswordUtil.hashPassword(newPass);</span>
+<span class="fc" id="L374">            boolean updated = employeeDAO.updatePassword(empId, hash);</span>
+
+<span class="fc bfc" id="L376" title="All 2 branches covered.">            if (updated) {</span>
+<span class="fc" id="L377">                AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;EMPLOYEES&quot;, empId, &quot;Password reset by Admin&quot;);</span>
+<span class="fc" id="L378">                logger.info(&quot;Password reset by Admin for employee: {}&quot;, empId);</span>
+<span class="fc" id="L379">                System.out.println(&quot;Password reset successfully.&quot;);</span>
+            } else {
+<span class="fc" id="L381">                System.out.println(&quot;Employee ID not found.&quot;);</span>
+            }
+
+<span class="nc" id="L384">        } catch (Exception e) {</span>
+<span class="nc" id="L385">            logger.error(&quot;Password reset failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L386">        }</span>
+<span class="fc" id="L387">    }</span>
+
+    /*
+     * =============================================================================
+     * ======
+     * SYSTEM CONFIGURATION (Delegates)
+     * =============================================================================
+     * ======
+     */
+
+    public static void configureLeaveTypes() {
+<span class="nc" id="L398">        AdminLeaveService.configureLeaveTypes();</span>
+<span class="nc" id="L399">    }</span>
+
+    public static void assignLeaveQuotas() {
+<span class="nc" id="L402">        AdminLeaveService.assignLeaveQuotas();</span>
+<span class="nc" id="L403">    }</span>
+
+    public static void adjustLeaveBalance() {
+<span class="nc" id="L406">        AdminLeaveService.adjustLeaveBalance();</span>
+<span class="nc" id="L407">    }</span>
+
+    public static void revokeLeave() {
+<span class="nc" id="L410">        AdminLeaveService.revokeLeave();</span>
+<span class="nc" id="L411">    }</span>
+
+    public static void leaveReports() {
+<span class="nc" id="L414">        AdminLeaveService.leaveReportsMenu();</span>
+<span class="nc" id="L415">    }</span>
+
+    public static void configureHolidays() {
+<span class="nc" id="L418">        AdminConfigService.configureHolidays();</span>
+<span class="nc" id="L419">    }</span>
+
+    public static void manageDepartments() {
+<span class="nc" id="L422">        AdminConfigService.manageDepartments();</span>
+<span class="nc" id="L423">    }</span>
+
+    public static void manageDesignations() {
+<span class="nc" id="L426">        AdminConfigService.manageDesignations();</span>
+<span class="nc" id="L427">    }</span>
+
+    public static void configurePerformanceCycles() {
+<span class="nc" id="L430">        AdminConfigService.configurePerformanceCycles();</span>
+<span class="nc" id="L431">    }</span>
+
+    public static void manageSystemPolicies() {
+<span class="nc" id="L434">        AdminConfigService.manageSystemPolicies();</span>
+<span class="nc" id="L435">    }</span>
+
+    public static void viewAuditLogs() {
+<span class="nc" id="L438">        auditDAO.printAuditLogs();</span>
+<span class="nc" id="L439">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

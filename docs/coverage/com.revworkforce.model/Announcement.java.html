@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Announcement.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.model</a> &gt; <span class="el_source">Announcement.java</span></div><h1>Announcement.java</h1><pre class="source lang-java linenums">package com.revworkforce.model;
+
+import java.sql.Timestamp;
+
+/**
+ * Represents a company announcement.
+ * Maps to the 'announcements' table.
+ */
+<span class="fc" id="L9">public class Announcement {</span>
+
+    private int announcementId;
+    private String title;
+    private String content;
+    private String postedBy;
+    private Timestamp postedDate;
+
+<span class="fc" id="L17">    public int getAnnouncementId() { return announcementId; }</span>
+<span class="fc" id="L18">    public void setAnnouncementId(int announcementId) { this.announcementId = announcementId; }</span>
+
+<span class="fc" id="L20">    public String getTitle() { return title; }</span>
+<span class="fc" id="L21">    public void setTitle(String title) { this.title = title; }</span>
+
+<span class="fc" id="L23">    public String getContent() { return content; }</span>
+<span class="fc" id="L24">    public void setContent(String content) { this.content = content; }</span>
+
+<span class="fc" id="L26">    public String getPostedBy() { return postedBy; }</span>
+<span class="fc" id="L27">    public void setPostedBy(String postedBy) { this.postedBy = postedBy; }</span>
+
+<span class="fc" id="L29">    public Timestamp getPostedDate() { return postedDate; }</span>
+<span class="fc" id="L30">    public void setPostedDate(Timestamp postedDate) { this.postedDate = postedDate; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -212,7 +212,9 @@ mvn test
 
 ### Coverage Report
 After running tests, you can view the detailed code coverage report here:
-**[View Coverage Report](site/jacoco/index.html)**
+**[View Coverage Report](docs/coverage/index.html)**
+
+
 
 
 ### Key Test Classes

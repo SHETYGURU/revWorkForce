@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditLog.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.model</a> &gt; <span class="el_source">AuditLog.java</span></div><h1>AuditLog.java</h1><pre class="source lang-java linenums">package com.revworkforce.model;
+
+import java.sql.Timestamp;
+
+/**
+ * Represents an audit log entry.
+ * Maps to the 'audit_logs' table.
+ */
+<span class="fc" id="L9">public class AuditLog {</span>
+
+    private int logId;
+    private String employeeId;
+    private String action;
+    private String tableName;
+    private String recordId;
+    private String oldValue;
+    private String newValue;
+    private String ipAddress;
+    private Timestamp createdAt;
+
+<span class="fc" id="L21">    public int getLogId() { return logId; }</span>
+<span class="fc" id="L22">    public void setLogId(int logId) { this.logId = logId; }</span>
+
+<span class="fc" id="L24">    public String getEmployeeId() { return employeeId; }</span>
+<span class="fc" id="L25">    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }</span>
+
+<span class="fc" id="L27">    public String getAction() { return action; }</span>
+<span class="fc" id="L28">    public void setAction(String action) { this.action = action; }</span>
+
+<span class="fc" id="L30">    public String getTableName() { return tableName; }</span>
+<span class="fc" id="L31">    public void setTableName(String tableName) { this.tableName = tableName; }</span>
+
+<span class="fc" id="L33">    public String getRecordId() { return recordId; }</span>
+<span class="fc" id="L34">    public void setRecordId(String recordId) { this.recordId = recordId; }</span>
+
+<span class="fc" id="L36">    public String getOldValue() { return oldValue; }</span>
+<span class="fc" id="L37">    public void setOldValue(String oldValue) { this.oldValue = oldValue; }</span>
+
+<span class="fc" id="L39">    public String getNewValue() { return newValue; }</span>
+<span class="fc" id="L40">    public void setNewValue(String newValue) { this.newValue = newValue; }</span>
+
+<span class="fc" id="L42">    public String getIpAddress() { return ipAddress; }</span>
+<span class="fc" id="L43">    public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }</span>
+
+<span class="fc" id="L45">    public Timestamp getCreatedAt() { return createdAt; }</span>
+<span class="fc" id="L46">    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

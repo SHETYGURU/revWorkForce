@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PerformanceReview.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.model</a> &gt; <span class="el_source">PerformanceReview.java</span></div><h1>PerformanceReview.java</h1><pre class="source lang-java linenums">package com.revworkforce.model;
+
+import java.sql.Timestamp;
+
+/**
+ * Represents a performance review document.
+ * Maps to the 'performance_reviews' table.
+ */
+<span class="fc" id="L9">public class PerformanceReview {</span>
+
+    private int reviewId;
+    private String employeeId;
+    private int cycleId;
+    private String keyDeliverables;
+    private String majorAccomplishments;
+    private String areasOfImprovement;
+    private Double selfAssessmentRating;
+    private String managerFeedback;
+    private Double managerRating;
+    private String status; // DRAFT, SUBMITTED, REVIEWED
+    private Timestamp submittedDate;
+    private Timestamp reviewedDate;
+    private String reviewedBy;
+
+    // Getters / Setters
+<span class="fc" id="L26">    public int getReviewId() { return reviewId; }</span>
+<span class="fc" id="L27">    public void setReviewId(int reviewId) { this.reviewId = reviewId; }</span>
+
+<span class="fc" id="L29">    public String getEmployeeId() { return employeeId; }</span>
+<span class="fc" id="L30">    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }</span>
+
+<span class="fc" id="L32">    public int getCycleId() { return cycleId; }</span>
+<span class="fc" id="L33">    public void setCycleId(int cycleId) { this.cycleId = cycleId; }</span>
+
+<span class="fc" id="L35">    public String getKeyDeliverables() { return keyDeliverables; }</span>
+<span class="fc" id="L36">    public void setKeyDeliverables(String keyDeliverables) { this.keyDeliverables = keyDeliverables; }</span>
+
+<span class="fc" id="L38">    public String getMajorAccomplishments() { return majorAccomplishments; }</span>
+<span class="fc" id="L39">    public void setMajorAccomplishments(String majorAccomplishments) { this.majorAccomplishments = majorAccomplishments; }</span>
+
+<span class="fc" id="L41">    public String getAreasOfImprovement() { return areasOfImprovement; }</span>
+<span class="fc" id="L42">    public void setAreasOfImprovement(String areasOfImprovement) { this.areasOfImprovement = areasOfImprovement; }</span>
+
+<span class="fc" id="L44">    public Double getSelfAssessmentRating() { return selfAssessmentRating; }</span>
+<span class="fc" id="L45">    public void setSelfAssessmentRating(Double selfAssessmentRating) { this.selfAssessmentRating = selfAssessmentRating; }</span>
+
+<span class="fc" id="L47">    public String getManagerFeedback() { return managerFeedback; }</span>
+<span class="fc" id="L48">    public void setManagerFeedback(String managerFeedback) { this.managerFeedback = managerFeedback; }</span>
+
+<span class="fc" id="L50">    public Double getManagerRating() { return managerRating; }</span>
+<span class="fc" id="L51">    public void setManagerRating(Double managerRating) { this.managerRating = managerRating; }</span>
+
+<span class="fc" id="L53">    public String getStatus() { return status; }</span>
+<span class="fc" id="L54">    public void setStatus(String status) { this.status = status; }</span>
+
+<span class="fc" id="L56">    public Timestamp getSubmittedDate() { return submittedDate; }</span>
+<span class="fc" id="L57">    public void setSubmittedDate(Timestamp submittedDate) { this.submittedDate = submittedDate; }</span>
+
+<span class="fc" id="L59">    public Timestamp getReviewedDate() { return reviewedDate; }</span>
+<span class="fc" id="L60">    public void setReviewedDate(Timestamp reviewedDate) { this.reviewedDate = reviewedDate; }</span>
+
+<span class="fc" id="L62">    public String getReviewedBy() { return reviewedBy; }</span>
+<span class="fc" id="L63">    public void setReviewedBy(String reviewedBy) { this.reviewedBy = reviewedBy; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

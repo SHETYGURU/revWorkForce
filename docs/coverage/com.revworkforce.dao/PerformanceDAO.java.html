@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PerformanceDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.dao</a> &gt; <span class="el_source">PerformanceDAO.java</span></div><h1>PerformanceDAO.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.dao;
+
+import com.revworkforce.util.DBConnection;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+/**
+ * DAO for Performance Reviews and Goals.
+ * Handles tracking of goals, feedback submission, and review cycles.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="fc" id="L19">public class PerformanceDAO {</span>
+
+    public ResultSet getTeamGoals(String managerId) throws Exception {
+<span class="fc" id="L22">        String sql = &quot;&quot;&quot;</span>
+                    SELECT g.goal_id,
+                           g.employee_id,
+                           g.goal_description,
+                           g.deadline,
+                           g.priority,
+                           g.progress_percentage
+                    FROM goals g
+                    JOIN employees e ON g.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    ORDER BY g.deadline
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L35">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L36">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L37">        ps.setString(1, managerId);</span>
+<span class="fc" id="L38">        return ps.executeQuery();</span>
+    }
+
+    /**
+     * Aggregates goal completion statistics for a manager's team.
+     * 
+     * @param managerId Manager's Employee ID.
+     * @return ResultSet with total vs completed goals per employee.
+     * @throws Exception if query fails.
+     */
+    public ResultSet getGoalCompletionSummary(String managerId) throws Exception {
+<span class="nc" id="L49">        String sql = &quot;&quot;&quot;</span>
+                    SELECT e.employee_id,
+                           COUNT(*) AS total_goals,
+                           SUM(CASE WHEN g.progress_percentage = 100 THEN 1 ELSE 0 END) AS completed_goals
+                    FROM goals g
+                    JOIN employees e ON g.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    GROUP BY e.employee_id
+                &quot;&quot;&quot;;
+
+<span class="nc" id="L59">        Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L60">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="nc" id="L61">        ps.setString(1, managerId);</span>
+<span class="nc" id="L62">        return ps.executeQuery();</span>
+    }
+
+    public void submitSelfReview(
+            String empId,
+            int cycleId,
+            String deliverables,
+            String accomplishments,
+            String improvements,
+            double rating) throws Exception {
+
+<span class="fc" id="L73">        String sql = &quot;&quot;&quot;</span>
+                    INSERT INTO performance_reviews
+                    (employee_id, cycle_id, key_deliverables,
+                     major_accomplishments, areas_of_improvement,
+                     self_assessment_rating, status)
+                    VALUES (?, ?, ?, ?, ?, ?, 'SUBMITTED')
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L81">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L82">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L84">            ps.setString(1, empId);</span>
+<span class="fc" id="L85">            ps.setInt(2, cycleId);</span>
+<span class="fc" id="L86">            ps.setString(3, deliverables);</span>
+<span class="fc" id="L87">            ps.setString(4, accomplishments);</span>
+<span class="fc" id="L88">            ps.setString(5, improvements);</span>
+<span class="fc" id="L89">            ps.setDouble(6, rating);</span>
+<span class="fc" id="L90">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Creates a new performance goal for an employee.
+     * 
+     * @param empId    Employee ID.
+     * @param desc     Goal description.
+     * @param deadline Target date.
+     * @param priority Priority level (High, Medium, Low).
+     * @param metrics  Success criteria.
+     * @throws Exception if insertion fails.
+     */
+    public void createGoal(
+            String empId,
+            String desc,
+            Date deadline,
+            String priority,
+            String metrics) throws Exception {
+
+<span class="fc" id="L111">        String sql = &quot;&quot;&quot;</span>
+                    INSERT INTO goals
+                    (employee_id, goal_description, deadline,
+                     priority, success_metrics, progress_percentage)
+                    VALUES (?, ?, ?, ?, ?, 0)
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L118">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L119">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L121">            ps.setString(1, empId);</span>
+<span class="fc" id="L122">            ps.setString(2, desc);</span>
+<span class="fc" id="L123">            ps.setDate(3, deadline);</span>
+<span class="fc" id="L124">            ps.setString(4, priority);</span>
+<span class="fc" id="L125">            ps.setString(5, metrics);</span>
+<span class="fc" id="L126">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L128">    }</span>
+
+    public ResultSet getMyGoals(String empId) throws Exception {
+<span class="nc" id="L131">        String sql = &quot;&quot;&quot;</span>
+                    SELECT goal_id, goal_description,
+                           deadline, priority, progress_percentage
+                    FROM goals
+                    WHERE employee_id = ?
+                    ORDER BY deadline
+                &quot;&quot;&quot;;
+
+<span class="nc" id="L139">        Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L140">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="nc" id="L141">        ps.setString(1, empId);</span>
+<span class="nc" id="L142">        return ps.executeQuery();</span>
+    }
+
+    public void updateGoalProgress(int goalId, int progress) throws Exception {
+<span class="nc" id="L146">        String sql = &quot;&quot;&quot;</span>
+                    UPDATE goals
+                    SET progress_percentage = ?
+                    WHERE goal_id = ?
+                &quot;&quot;&quot;;
+
+<span class="nc" id="L152">        try (Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L153">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="nc" id="L155">            ps.setInt(1, progress);</span>
+<span class="nc" id="L156">            ps.setInt(2, goalId);</span>
+<span class="nc" id="L157">            ps.executeUpdate();</span>
+        }
+<span class="nc" id="L159">    }</span>
+
+    public ResultSet getMyFeedback(String empId) throws Exception {
+<span class="nc" id="L162">        String sql = &quot;&quot;&quot;</span>
+                    SELECT manager_feedback, manager_rating
+                    FROM performance_reviews
+                    WHERE employee_id = ?
+                      AND manager_feedback IS NOT NULL
+                &quot;&quot;&quot;;
+
+<span class="nc" id="L169">        Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L170">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="nc" id="L171">        ps.setString(1, empId);</span>
+<span class="nc" id="L172">        return ps.executeQuery();</span>
+    }
+
+    public ResultSet getTeamReviews(String managerId) throws Exception {
+<span class="nc" id="L176">        String sql = &quot;&quot;&quot;</span>
+                    SELECT pr.review_id,
+                           pr.employee_id,
+                           pr.status,
+                           pr.self_assessment_rating
+                    FROM performance_reviews pr
+                    JOIN employees e ON pr.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    ORDER BY pr.submitted_date DESC
+                &quot;&quot;&quot;;
+
+<span class="nc" id="L187">        Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L188">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="nc" id="L189">        ps.setString(1, managerId);</span>
+<span class="nc" id="L190">        return ps.executeQuery();</span>
+    }
+
+    public void submitManagerFeedback(int reviewId, String feedback, int rating) throws Exception {
+<span class="fc" id="L194">        String sql = &quot;&quot;&quot;</span>
+                    UPDATE performance_reviews
+                    SET manager_feedback = ?,
+                        manager_rating = ?,
+                        status = 'REVIEWED',
+                        review_date = CURRENT_TIMESTAMP
+                    WHERE review_id = ?
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L203">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L204">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L206">            ps.setString(1, feedback);</span>
+<span class="fc" id="L207">            ps.setInt(2, rating);</span>
+<span class="fc" id="L208">            ps.setInt(3, reviewId);</span>
+<span class="fc" id="L209">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L211">    }</span>
+
+    public ResultSet getTeamPerformanceSummary(String managerId) throws Exception {
+<span class="nc" id="L214">        String sql = &quot;&quot;&quot;</span>
+                    SELECT e.employee_id,
+                           AVG(pr.manager_rating) as avg_rating
+                    FROM employees e
+                    JOIN performance_reviews pr ON e.employee_id = pr.employee_id
+                    WHERE e.manager_id = ?
+                    GROUP BY e.employee_id
+                &quot;&quot;&quot;;
+
+<span class="nc" id="L223">        Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L224">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="nc" id="L225">        ps.setString(1, managerId);</span>
+<span class="nc" id="L226">        return ps.executeQuery();</span>
+    }
+
+    public String getEmployeeIdForReview(int reviewId) throws Exception {
+<span class="nc" id="L230">        String sql = &quot;SELECT employee_id FROM performance_reviews WHERE review_id = ?&quot;;</span>
+<span class="nc" id="L231">        try (Connection con = DBConnection.getConnection();</span>
+<span class="nc" id="L232">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+<span class="nc" id="L233">            ps.setInt(1, reviewId);</span>
+<span class="nc" id="L234">            try (ResultSet rs = ps.executeQuery()) {</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">                if (rs.next()) {</span>
+<span class="nc" id="L236">                    return rs.getString(&quot;employee_id&quot;);</span>
+                }
+<span class="nc bnc" id="L238" title="All 2 branches missed.">            }</span>
+<span class="nc bnc" id="L239" title="All 4 branches missed.">        }</span>
+<span class="nc" id="L240">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

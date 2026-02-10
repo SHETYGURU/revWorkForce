@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminLeaveService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">AdminLeaveService.java</span></div><h1>AdminLeaveService.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.service;
+
+import com.revworkforce.dao.LeaveDAO;
+import com.revworkforce.dao.LeavePolicyDAO;
+import com.revworkforce.util.InputUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+/**
+ * Service for Admin Leave Management tasks.
+ * Handles configuration of leave types, quota assignments, and leave reporting.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="nc" id="L18">public class AdminLeaveService {</span>
+
+<span class="fc" id="L20">    private static final Logger logger = LogManager.getLogger(AdminLeaveService.class);</span>
+
+<span class="fc" id="L22">    private static LeavePolicyDAO policyDAO = new LeavePolicyDAO();</span>
+<span class="fc" id="L23">    private static LeaveDAO leaveDAO = new LeaveDAO();</span>
+
+    private static String getAdminId() {
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">        return com.revworkforce.context.SessionContext.get() != null</span>
+<span class="fc" id="L27">                ? com.revworkforce.context.SessionContext.get().getEmployeeId()</span>
+<span class="nc" id="L28">                : &quot;ADMIN001&quot;; // Fallback</span>
+    }
+
+    /**
+     * Configures a new Leave Type in the system.
+     * Defines parameters like maximum days allowed and carry-forward policies.
+     */
+    public static void configureLeaveTypes() {
+<span class="fc" id="L36">        System.out.println(&quot;\n--- CONFIGURE LEAVE TYPE ---&quot;);</span>
+<span class="fc" id="L37">        String name = InputUtil.readString(&quot;Leave Type Name (e.g. SICK_LEAVE): &quot;);</span>
+<span class="fc" id="L38">        int max = InputUtil.readInt(&quot;Max leaves per year: &quot;);</span>
+<span class="fc" id="L39">        String carryInput = InputUtil.readString(&quot;Carry forward allowed? (Y/N): &quot;);</span>
+<span class="fc" id="L40">        boolean carry = carryInput.equalsIgnoreCase(&quot;Y&quot;);</span>
+
+        try {
+<span class="fc" id="L43">            policyDAO.createLeaveType(name, max, carry);</span>
+<span class="fc" id="L44">            AuditService.log(getAdminId(), &quot;CREATE&quot;, &quot;LEAVE_TYPES&quot;, name, &quot;Leave type created: &quot; + name);</span>
+<span class="fc" id="L45">            System.out.println(&quot;Leave type '&quot; + name + &quot;' configured successfully.&quot;);</span>
+<span class="fc" id="L46">        } catch (Exception e) {</span>
+<span class="fc" id="L47">            logger.error(&quot;Failed to configure leave type: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L48">        }</span>
+<span class="fc" id="L49">    }</span>
+
+    /**
+     * Assigns leave quotas to specific employees for a given year.
+     * Overwrites existing quotas if re-run for the same type/year.
+     */
+    public static void assignLeaveQuotas() {
+<span class="fc" id="L56">        System.out.println(&quot;\n--- ASSIGN LEAVE QUOTA ---&quot;);</span>
+<span class="fc" id="L57">        String empId = InputUtil.readString(&quot;Employee ID: &quot;);</span>
+<span class="fc" id="L58">        int leaveType = InputUtil.readInt(&quot;Leave Type ID: &quot;);</span>
+<span class="fc" id="L59">        int year = InputUtil.readInt(&quot;Year (e.g. 2024): &quot;);</span>
+<span class="fc" id="L60">        int quota = InputUtil.readInt(&quot;Quota Amount: &quot;);</span>
+
+        try {
+<span class="fc" id="L63">            leaveDAO.assignLeaveQuota(empId, leaveType, year, quota);</span>
+<span class="fc" id="L64">            AuditService.log(getAdminId(), &quot;ASSIGN&quot;, &quot;LEAVE_BALANCES&quot;, empId,</span>
+                    &quot;Quota assigned: Type=&quot; + leaveType + &quot;, Val=&quot; + quota);
+<span class="fc" id="L66">            System.out.println(&quot;Leave quota assigned successfully.&quot;);</span>
+<span class="fc" id="L67">        } catch (Exception e) {</span>
+<span class="fc" id="L68">            logger.error(&quot;Failed to assign quota: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L69">        }</span>
+<span class="fc" id="L70">    }</span>
+
+    public static void adjustLeaveBalance() {
+<span class="fc" id="L73">        System.out.println(&quot;\n--- ADJUST LEAVE BALANCE ---&quot;);</span>
+<span class="fc" id="L74">        System.out.println(&quot;Note: This will overwrite the existing balance.&quot;);</span>
+<span class="fc" id="L75">        assignLeaveQuotas(); // Re-use logic or implement specific update logic</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Revokes an already approved leave request.
+     * This is an administrative override for exceptional circumstances.
+     */
+    public static void revokeLeave() {
+<span class="fc" id="L83">        System.out.println(&quot;\n--- REVOKE APPROVED LEAVE ---&quot;);</span>
+<span class="fc" id="L84">        int leaveId = InputUtil.readInt(&quot;Enter Leave Application ID: &quot;);</span>
+<span class="fc" id="L85">        String reason = InputUtil.readString(&quot;Revocation Reason: &quot;);</span>
+
+        try {
+<span class="fc" id="L88">            leaveDAO.updateLeaveStatus(leaveId, getAdminId(), &quot;REVOKED&quot;, reason);</span>
+<span class="fc" id="L89">            AuditService.log(getAdminId(), &quot;REVOKE&quot;, &quot;LEAVE_APPLICATIONS&quot;, String.valueOf(leaveId),</span>
+                    &quot;Revoked by Admin. Reason: &quot; + reason);
+<span class="fc" id="L91">            System.out.println(&quot;Leave application &quot; + leaveId + &quot; has been REVOKED.&quot;);</span>
+<span class="fc" id="L92">        } catch (Exception e) {</span>
+<span class="fc" id="L93">            logger.error(&quot;Failed to revoke leave: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L94">        }</span>
+<span class="fc" id="L95">    }</span>
+
+    /**
+     * Displays statistical data on leave usage across the organization.
+     */
+    public static void viewLeaveStatistics() {
+        try {
+<span class="fc" id="L102">            System.out.println(&quot;\n--- LEAVE STATISTICS ---&quot;);</span>
+<span class="fc" id="L103">            java.sql.ResultSet rs = leaveDAO.getLeaveStatistics();</span>
+<span class="fc" id="L104">            System.out.printf(&quot;%-15s | %-10s%n&quot;, &quot;STATUS&quot;, &quot;COUNT&quot;);</span>
+<span class="fc" id="L105">            System.out.println(&quot;-----------------------------&quot;);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L107">                System.out.printf(&quot;%-15s | %-10d%n&quot;,</span>
+<span class="nc" id="L108">                        rs.getString(&quot;status&quot;),</span>
+<span class="nc" id="L109">                        rs.getInt(&quot;count&quot;));</span>
+            }
+<span class="fc" id="L111">        } catch (Exception e) {</span>
+<span class="fc" id="L112">            logger.error(&quot;Failed to load statistics: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L113">        }</span>
+<span class="fc" id="L114">    }</span>
+
+    public static void leaveReportsMenu() {
+        while (true) {
+<span class="fc" id="L118">            System.out.println(&quot;\n--- LEAVE REPORTS ---&quot;);</span>
+<span class="fc" id="L119">            System.out.println(&quot;1. System-wide Statistics&quot;);</span>
+<span class="fc" id="L120">            System.out.println(&quot;2. Department-wise Report&quot;);</span>
+<span class="fc" id="L121">            System.out.println(&quot;3. Employee-wise Report&quot;);</span>
+<span class="fc" id="L122">            System.out.println(&quot;4. Back&quot;);</span>
+
+<span class="fc" id="L124">            int choice = InputUtil.readInt(&quot;Select Option: &quot;);</span>
+
+            try {
+<span class="fc bfc" id="L127" title="All 5 branches covered.">                switch (choice) {</span>
+<span class="fc" id="L128">                    case 1 -&gt; viewLeaveStatistics();</span>
+                    case 2 -&gt; {
+<span class="fc" id="L130">                        System.out.println(&quot;\n--- DEPARTMENT LEAVE REPORT ---&quot;);</span>
+<span class="fc" id="L131">                        java.sql.ResultSet rs = leaveDAO.getDepartmentLeaveReport();</span>
+<span class="fc" id="L132">                        System.out.printf(&quot;%-20s | %-20s | %-15s | %-10s%n&quot;, &quot;Department&quot;, &quot;Employee&quot;, &quot;Leave Type&quot;,</span>
+                                &quot;Days&quot;);
+<span class="fc" id="L134">                        System.out</span>
+<span class="fc" id="L135">                                .println(&quot;--------------------------------------------------------------------------&quot;);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">                        while (rs.next()) {</span>
+<span class="nc" id="L137">                            System.out.printf(&quot;%-20s | %-20s | %-15s | %-10d%n&quot;,</span>
+<span class="nc" id="L138">                                    rs.getString(&quot;department_name&quot;),</span>
+<span class="nc" id="L139">                                    rs.getString(&quot;emp_name&quot;),</span>
+<span class="nc" id="L140">                                    rs.getString(&quot;leave_type_name&quot;),</span>
+<span class="nc" id="L141">                                    rs.getInt(&quot;days_taken&quot;) // Check if this is int or double in DB, int usually ok for</span>
+                                                            // count
+                            );
+                        }
+<span class="nc" id="L145">                    }</span>
+                    case 3 -&gt; {
+<span class="fc" id="L147">                        String empId = InputUtil.readString(&quot;Enter Employee ID: &quot;);</span>
+<span class="fc" id="L148">                        System.out.println(&quot;\n--- EMPLOYEE LEAVE HISTORY ---&quot;);</span>
+<span class="fc" id="L149">                        java.sql.ResultSet rs = leaveDAO.getEmployeeLeaveReport(empId);</span>
+<span class="fc" id="L150">                        System.out.printf(&quot;%-15s | %-12s | %-12s | %-10s%n&quot;, &quot;Type&quot;, &quot;Start&quot;, &quot;End&quot;, &quot;Status&quot;);</span>
+<span class="fc" id="L151">                        System.out.println(&quot;-----------------------------------------------------------&quot;);</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                        while (rs.next()) {</span>
+<span class="nc" id="L153">                            System.out.printf(&quot;%-15s | %-12s | %-12s | %-10s%n&quot;,</span>
+<span class="nc" id="L154">                                    rs.getString(&quot;leave_type_name&quot;),</span>
+<span class="nc" id="L155">                                    rs.getDate(&quot;start_date&quot;),</span>
+<span class="nc" id="L156">                                    rs.getDate(&quot;end_date&quot;),</span>
+<span class="nc" id="L157">                                    rs.getString(&quot;status&quot;));</span>
+                        }
+<span class="nc" id="L159">                    }</span>
+                    case 4 -&gt; {
+<span class="fc" id="L161">                        return;</span>
+                    }
+<span class="fc" id="L163">                    default -&gt; System.out.println(&quot;Invalid option.&quot;);</span>
+                }
+<span class="fc" id="L165">            } catch (Exception e) {</span>
+<span class="fc" id="L166">                logger.error(&quot;Report generation failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L167">            }</span>
+<span class="fc" id="L168">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

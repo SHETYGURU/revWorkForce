@@ -120,6 +120,8 @@ class AdminServiceTest {
 
                 // 12. Manager ID (Uses simple readString)
                 mockInputUtil.when(() -> InputUtil.readString(contains("Manager ID"))).thenReturn("");
+                // Mock manager validation (null case handled, but if non-empty, we'd mock
+                // isEmployeeExists)
 
                 // 13. Salary -> "50000" (Uses 3-arg)
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Salary"), any(),
@@ -155,6 +157,10 @@ class AdminServiceTest {
         void testUpdateEmployee_ContactInfo() throws Exception {
                 // Choice 1: Update Contact Info
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
+
+                // Mock validation for Employee ID existence
+                when(mockEmpDao.isEmployeeExists("EMP001")).thenReturn(true);
+
                 mockInputUtil.when(() -> InputUtil.readInt(anyString())).thenReturn(1); // Select Option 1
 
                 // Phone
@@ -179,26 +185,11 @@ class AdminServiceTest {
 
         @Test
         void testUnlockEmployeeAccount() throws Exception {
-                // This method uses DBConnection directly?
-                // AdminService.unlockEmployeeAccount() uses DBConnection.getConnection()
-                // This is hard to mock without refactoring AdminService to use a DAO method for
-                // unlocking,
-                // OR mocking DBConnection static method.
-                // Given the constraints, I should probably check if AdminService uses DAO for
-                // this.
-                // It uses direct SQL: UPDATE employees SET account_locked = 0 ...
-                // I cannot easily test this without mocking DBConnection or refactoring.
-                // Refactoring is better practice. Let's assume for now I skip this one or
-                // refactor.
-                // Wait, the plan was to add tests.
-                // I can mock static DBConnection if I want.
-                // BUT, looking at other tests, it seems we prefer DAO.
-                // For now, I will skip testing methods that use direct DBConnection unless I
-                // refactor them to use DAO.
-                // Let's look at resetUserPassword -> calls employeeDAO.updatePassword. So I CAN
-                // test that.
-
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
+
+                // Mock validation for Employee ID existence
+                when(mockEmpDao.isEmployeeExists("EMP001")).thenReturn(true);
+
                 mockInputUtil.when(() -> InputUtil.readString(contains("New Password"))).thenReturn("newpass");
 
                 when(mockEmpDao.updatePassword(eq("EMP001"), anyString())).thenReturn(true);
@@ -213,6 +204,11 @@ class AdminServiceTest {
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
                 mockInputUtil.when(() -> InputUtil.readString(contains("New Manager ID"))).thenReturn("MGR001");
 
+                // Mock validation for Employee ID existence
+                when(mockEmpDao.isEmployeeExists("EMP001")).thenReturn(true);
+                // Mock validation for Manager ID existence
+                when(mockEmpDao.isEmployeeExists("MGR001")).thenReturn(true);
+
                 AdminService.assignManager();
 
                 verify(mockEmpDao).assignManager("EMP001", "MGR001");
@@ -221,6 +217,9 @@ class AdminServiceTest {
         @Test
         void testToggleEmployeeStatus() throws Exception {
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
+
+                // Mock validation for Employee ID existence
+                when(mockEmpDao.isEmployeeExists("EMP001")).thenReturn(true);
 
                 AdminService.toggleEmployeeStatus();
 
@@ -261,11 +260,17 @@ class AdminServiceTest {
         void testUpdateEmployee_Failure() throws Exception {
                 // Test database error during update
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
+
+                // Mock validation to allow flow to proceed
+                when(mockEmpDao.isEmployeeExists("EMP001")).thenReturn(true);
+
                 mockInputUtil.when(() -> InputUtil.readInt(anyString())).thenReturn(1); // Option 1
 
                 // Mock valid input flow
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("New Phone"), any()))
                                 .thenReturn("9876543210");
+                when(mockEmpDao.isPhoneExists("9876543210")).thenReturn(false);
+
                 mockInputUtil.when(() -> InputUtil.readValidatedString(contains("New Address"), any(),
                                 anyString()))
                                 .thenReturn("Addr");
@@ -285,6 +290,10 @@ class AdminServiceTest {
         @Test
         void testResetUserPassword_Failure() throws Exception {
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
+
+                // Mock validation to allow flow to proceed
+                when(mockEmpDao.isEmployeeExists("EMP001")).thenReturn(true);
+
                 mockInputUtil.when(() -> InputUtil.readString(contains("New Password"))).thenReturn("newpass");
 
                 when(mockEmpDao.updatePassword(anyString(), anyString())).thenReturn(false); // ID not found
@@ -299,6 +308,10 @@ class AdminServiceTest {
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP001");
                 mockInputUtil.when(() -> InputUtil.readString(contains("New Manager ID"))).thenReturn("MGR001");
 
+                // Mock validation for IDs to allow flow to proceed
+                when(mockEmpDao.isEmployeeExists("EMP001")).thenReturn(true);
+                when(mockEmpDao.isEmployeeExists("MGR001")).thenReturn(true);
+
                 doThrow(new RuntimeException("DB Error")).when(mockEmpDao).assignManager(anyString(), anyString());
 
                 AdminService.assignManager();
@@ -309,12 +322,28 @@ class AdminServiceTest {
         @Test
         void testUpdateEmployee_ProfessionalInfo() throws Exception {
                 mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID"))).thenReturn("EMP002");
+
+                // Mock validation
+                when(mockEmpDao.isEmployeeExists("EMP002")).thenReturn(true);
+
                 mockInputUtil.when(() -> InputUtil.readInt(anyString())).thenReturn(2);
 
-                mockInputUtil.when(() -> InputUtil.readString(contains("Department ID"))).thenReturn("5");
+                mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Department ID"), any()))
+                                .thenReturn("5");
+                when(mockDeptDao.isDepartmentIdExists("5")).thenReturn(true);
+
                 mockInputUtil.when(() -> InputUtil.readString(contains("Designation ID"))).thenReturn("10");
+                when(mockDesigDao.isDesignationIdExists("10")).thenReturn(true);
+                when(mockDesigDao.isDesignationMatchRole("10", false)).thenReturn(true); // Assuming role N
+
                 mockInputUtil.when(() -> InputUtil.readString(contains("Manager ID"))).thenReturn("MGR001");
-                mockInputUtil.when(() -> InputUtil.readString(contains("Salary"))).thenReturn("75000");
+                // Manager exists validation handled by generic isEmployeeExists("MGR001") if
+                // checked, but logic checks if !empty
+                when(mockEmpDao.isEmployeeExists("MGR001")).thenReturn(true);
+
+                mockInputUtil.when(() -> InputUtil.readValidatedString(contains("Salary"), any(),
+                                anyString()))
+                                .thenReturn("75000");
 
                 AdminService.updateEmployee();
 
@@ -344,4 +373,3 @@ class AdminServiceTest {
                 verify(mockEmpDao, never()).updatePassword(anyString(), anyString());
         }
 }
-

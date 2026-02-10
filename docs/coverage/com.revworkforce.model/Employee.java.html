@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Employee.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.model</a> &gt; <span class="el_source">Employee.java</span></div><h1>Employee.java</h1><pre class="source lang-java linenums">package com.revworkforce.model;
+
+import java.sql.Date;
+import java.sql.Timestamp;
+
+/**
+ * Represents an Employee in the system.
+ * Maps to the 'employees' table.
+ */
+public class Employee {
+
+    private String employeeId;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phone;
+    private String address;
+    private String emergencyContact;
+    private Date dateOfBirth;
+    private Integer departmentId;
+    private Integer designationId;
+    private String managerId;
+    private Date joiningDate;
+    private Double salary;
+    private String passwordHash;
+    private boolean isActive;
+    
+    // Security fields
+    private int failedLoginAttempts;
+    private boolean accountLocked;
+    private Timestamp lastLogin;
+    
+    // Additional helpful field for role (though stored in roles table/joined usually)
+    private String role; 
+
+<span class="fc" id="L36">    public Employee() {}</span>
+
+    // Getters and Setters
+
+<span class="fc" id="L40">    public String getEmployeeId() { return employeeId; }</span>
+<span class="fc" id="L41">    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }</span>
+
+<span class="fc" id="L43">    public String getFirstName() { return firstName; }</span>
+<span class="fc" id="L44">    public void setFirstName(String firstName) { this.firstName = firstName; }</span>
+
+<span class="fc" id="L46">    public String getLastName() { return lastName; }</span>
+<span class="fc" id="L47">    public void setLastName(String lastName) { this.lastName = lastName; }</span>
+
+<span class="fc" id="L49">    public String getEmail() { return email; }</span>
+<span class="fc" id="L50">    public void setEmail(String email) { this.email = email; }</span>
+
+<span class="fc" id="L52">    public String getPhone() { return phone; }</span>
+<span class="fc" id="L53">    public void setPhone(String phone) { this.phone = phone; }</span>
+
+<span class="fc" id="L55">    public String getAddress() { return address; }</span>
+<span class="fc" id="L56">    public void setAddress(String address) { this.address = address; }</span>
+
+<span class="fc" id="L58">    public String getEmergencyContact() { return emergencyContact; }</span>
+<span class="fc" id="L59">    public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }</span>
+
+<span class="fc" id="L61">    public Date getDateOfBirth() { return dateOfBirth; }</span>
+<span class="fc" id="L62">    public void setDateOfBirth(Date dateOfBirth) { this.dateOfBirth = dateOfBirth; }</span>
+
+<span class="fc" id="L64">    public Integer getDepartmentId() { return departmentId; }</span>
+<span class="fc" id="L65">    public void setDepartmentId(Integer departmentId) { this.departmentId = departmentId; }</span>
+
+<span class="fc" id="L67">    public Integer getDesignationId() { return designationId; }</span>
+<span class="fc" id="L68">    public void setDesignationId(Integer designationId) { this.designationId = designationId; }</span>
+
+<span class="fc" id="L70">    public String getManagerId() { return managerId; }</span>
+<span class="fc" id="L71">    public void setManagerId(String managerId) { this.managerId = managerId; }</span>
+
+<span class="fc" id="L73">    public Date getJoiningDate() { return joiningDate; }</span>
+<span class="fc" id="L74">    public void setJoiningDate(Date joiningDate) { this.joiningDate = joiningDate; }</span>
+
+<span class="fc" id="L76">    public Double getSalary() { return salary; }</span>
+<span class="fc" id="L77">    public void setSalary(Double salary) { this.salary = salary; }</span>
+
+<span class="fc" id="L79">    public String getPasswordHash() { return passwordHash; }</span>
+<span class="fc" id="L80">    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }</span>
+
+<span class="fc" id="L82">    public boolean isActive() { return isActive; }</span>
+<span class="fc" id="L83">    public void setActive(boolean active) { isActive = active; }</span>
+    
+<span class="fc" id="L85">    public int getFailedLoginAttempts() { return failedLoginAttempts; }</span>
+<span class="fc" id="L86">    public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }</span>
+
+<span class="fc" id="L88">    public boolean isAccountLocked() { return accountLocked; }</span>
+<span class="fc" id="L89">    public void setAccountLocked(boolean accountLocked) { this.accountLocked = accountLocked; }</span>
+
+<span class="fc" id="L91">    public Timestamp getLastLogin() { return lastLogin; }</span>
+<span class="fc" id="L92">    public void setLastLogin(Timestamp lastLogin) { this.lastLogin = lastLogin; }</span>
+
+<span class="fc" id="L94">    public String getRole() { return role; }</span>
+<span class="fc" id="L95">    public void setRole(String role) { this.role = role; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

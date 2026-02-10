@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.dao</a> &gt; <span class="el_source">NotificationDAO.java</span></div><h1>NotificationDAO.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.dao;
+
+import com.revworkforce.exception.AppException;
+import com.revworkforce.util.DBConnection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+/**
+ * Data Access Object for Notification management.
+ * Handles fetching unread counts and retrieving/marking notifications.
+ */
+/**
+ * Data Access Object for Notification management.
+ * Handles fetching unread counts, retrieving notifications, and marking them as
+ * read.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="fc" id="L26">public class NotificationDAO {</span>
+
+<span class="fc" id="L28">    private static final Logger logger = LogManager.getLogger(NotificationDAO.class);</span>
+
+    // SQL Queries
+    private static final String SQL_GET_UNREAD_COUNT = &quot;&quot;&quot;
+                SELECT COUNT(*)
+                FROM notifications
+                WHERE employee_id = ?
+                  AND is_read = 0
+            &quot;&quot;&quot;;
+
+    private static final String SQL_GET_NOTIFICATIONS = &quot;&quot;&quot;
+                SELECT notification_id, message, created_at
+                FROM notifications
+                WHERE employee_id = ?
+                  AND is_read = 0
+                ORDER BY created_at DESC
+            &quot;&quot;&quot;;
+
+    private static final String SQL_MARK_READ = &quot;&quot;&quot;
+                UPDATE notifications
+                SET is_read = 1
+                WHERE notification_id = ?
+            &quot;&quot;&quot;;
+
+    private static final String SQL_INSERT_NOTIFICATION = &quot;&quot;&quot;
+                INSERT INTO notifications (employee_id, notification_type, message)
+                VALUES (?, ?, ?)
+            &quot;&quot;&quot;;
+
+    /**
+     * Creates a new notification record for an employee.
+     * 
+     * @param empId   The target Employee ID.
+     * @param type    The notification category (e.g., LEAVE_APPROVED).
+     * @param message The content to display.
+     */
+    public void createNotification(String empId, String type, String message) {
+<span class="fc" id="L65">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L66">                PreparedStatement ps = con.prepareStatement(SQL_INSERT_NOTIFICATION)) {</span>
+<span class="fc" id="L67">            ps.setString(1, empId);</span>
+<span class="fc" id="L68">            ps.setString(2, type);</span>
+<span class="fc" id="L69">            ps.setString(3, message);</span>
+<span class="fc" id="L70">            ps.executeUpdate();</span>
+<span class="nc" id="L71">        } catch (Exception e) {</span>
+<span class="nc" id="L72">            logger.error(&quot;Error creating notification: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L73">        }</span>
+<span class="fc" id="L74">    }</span>
+
+    /**
+     * Gets the count of unread notifications for a specific employee.
+     *
+     * @param empId The employee ID.
+     * @return The number of unread notifications.
+     */
+    public int getUnreadCount(String empId) {
+<span class="fc" id="L83">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L84">                PreparedStatement ps = con.prepareStatement(SQL_GET_UNREAD_COUNT)) {</span>
+
+<span class="fc" id="L86">            ps.setString(1, empId);</span>
+<span class="fc" id="L87">            try (ResultSet rs = ps.executeQuery()) {</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">                if (rs.next()) {</span>
+<span class="fc" id="L89">                    return rs.getInt(1);</span>
+                }
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">            }</span>
+<span class="pc bpc" id="L92" title="2 of 4 branches missed.">        } catch (Exception e) {</span>
+            // Log error internally but return 0 to avoid breaking UI
+<span class="nc" id="L94">            logger.error(&quot;Error fetching notification count: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L95">        }</span>
+<span class="nc" id="L96">        return 0;</span>
+    }
+
+    /**
+     * Prints unread notifications to the console and marks them as read.
+     *
+     * @param empId The employee ID.
+     */
+    public void printAndMarkRead(String empId) {
+
+<span class="fc" id="L106">        System.out.println(&quot;\n--- NOTIFICATIONS ---&quot;);</span>
+
+<span class="fc" id="L108">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L109">                PreparedStatement psSelect = con.prepareStatement(SQL_GET_NOTIFICATIONS);</span>
+<span class="fc" id="L110">                PreparedStatement psUpdate = con.prepareStatement(SQL_MARK_READ)) {</span>
+
+<span class="fc" id="L112">            psSelect.setString(1, empId);</span>
+
+<span class="fc" id="L114">            try (ResultSet rs = psSelect.executeQuery()) {</span>
+
+<span class="fc" id="L116">                boolean hasNotifications = false;</span>
+
+<span class="fc bfc" id="L118" title="All 2 branches covered.">                while (rs.next()) {</span>
+<span class="fc" id="L119">                    hasNotifications = true;</span>
+<span class="fc" id="L120">                    int notifId = rs.getInt(&quot;notification_id&quot;);</span>
+<span class="fc" id="L121">                    String message = rs.getString(&quot;message&quot;);</span>
+                    // Assuming created_at is a timestamp/date
+<span class="fc" id="L123">                    String date = rs.getString(&quot;created_at&quot;);</span>
+
+<span class="fc" id="L125">                    System.out.println(&quot;[NEW] &quot; + date + &quot;: &quot; + message);</span>
+
+                    // Mark as read immediately
+<span class="fc" id="L128">                    psUpdate.setInt(1, notifId);</span>
+<span class="fc" id="L129">                    psUpdate.addBatch();</span>
+<span class="fc" id="L130">                }</span>
+
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">                if (hasNotifications) {</span>
+<span class="fc" id="L133">                    psUpdate.executeBatch();</span>
+                } else {
+<span class="nc" id="L135">                    System.out.println(&quot;No new notifications.&quot;);</span>
+                }
+            }
+
+<span class="nc" id="L139">        } catch (Exception e) {</span>
+<span class="nc" id="L140">            throw new AppException(&quot;Failed to retrieve notifications&quot;, e);</span>
+<span class="fc" id="L141">        }</span>
+<span class="fc" id="L142">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

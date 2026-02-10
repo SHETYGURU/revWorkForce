@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ManagerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">ManagerService.java</span></div><h1>ManagerService.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.service;
+
+import com.revworkforce.dao.AttendanceDAO;
+import com.revworkforce.dao.EmployeeDAO;
+import com.revworkforce.dao.LeaveDAO;
+import com.revworkforce.dao.PerformanceDAO;
+import com.revworkforce.util.InputUtil;
+import com.revworkforce.util.MessageConstants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.ResultSet;
+
+/**
+ * Service class for Manager-specific operations.
+ * Operations include Team Management, Leave Approvals, Performance Reviews, and
+ * Goal Setting.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="nc" id="L24">public class ManagerService {</span>
+
+<span class="fc" id="L26">    private static final Logger logger = LogManager.getLogger(ManagerService.class);</span>
+
+<span class="fc" id="L28">    private static EmployeeDAO employeeDAO = new EmployeeDAO();</span>
+<span class="fc" id="L29">    private static LeaveDAO leaveDAO = new LeaveDAO();</span>
+<span class="fc" id="L30">    private static AttendanceDAO attendanceDAO = new AttendanceDAO();</span>
+<span class="fc" id="L31">    private static PerformanceDAO performanceDAO = new PerformanceDAO();</span>
+
+    /*
+     * =============================================================================
+     * ======
+     * TEAM MANAGEMENT
+     * =============================================================================
+     * ======
+     */
+
+    /**
+     * View all direct reportees.
+     * 
+     * @param managerId Manager's Employee ID.
+     */
+    public static void viewTeam(String managerId) {
+        try {
+<span class="fc" id="L48">            ResultSet rs = employeeDAO.getReportees(managerId);</span>
+<span class="fc" id="L49">            System.out.println(&quot;\n--- MY TEAM ---&quot;);</span>
+
+<span class="fc bfc" id="L51" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L52">                System.out.println(</span>
+<span class="fc" id="L53">                        rs.getString(&quot;employee_id&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L54">                                rs.getString(&quot;first_name&quot;) + &quot; &quot;</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">                                + (rs.getString(&quot;last_name&quot;) != null ? rs.getString(&quot;last_name&quot;) : &quot;&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L56">                                rs.getString(&quot;designation_name&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L57">                                rs.getString(&quot;department_name&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L58">                                rs.getString(&quot;email&quot;));</span>
+            }
+<span class="fc" id="L60">        } catch (Exception e) {</span>
+<span class="fc" id="L61">            logger.error(&quot;Failed to fetch team: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L62">        }</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * View details of a specific team member.
+     * 
+     * @param employeeId Member's Employee ID.
+     */
+    public static void viewTeamMemberProfile(String employeeId) {
+        // Re-use logic from EmployeeService
+<span class="fc" id="L72">        EmployeeService.viewProfile(employeeId);</span>
+<span class="fc" id="L73">    }</span>
+
+    /**
+     * View basic details (ID and Name) of direct reportees.
+     * 
+     * @param managerId Manager's Employee ID.
+     */
+    public static void viewTeamBasic(String managerId) {
+        try {
+<span class="fc" id="L82">            ResultSet rs = employeeDAO.getReportees(managerId);</span>
+<span class="fc" id="L83">            System.out.println(&quot;\n--- TEAM MEMBERS ---&quot;);</span>
+<span class="fc" id="L84">            System.out.printf(&quot;%-10s | %-20s%n&quot;, &quot;ID&quot;, &quot;Name&quot;);</span>
+<span class="fc" id="L85">            System.out.println(&quot;---------------------------------&quot;);</span>
+
+<span class="fc bfc" id="L87" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L88">                String name = rs.getString(&quot;first_name&quot;) + &quot; &quot; +</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">                        (rs.getString(&quot;last_name&quot;) != null ? rs.getString(&quot;last_name&quot;) : &quot;&quot;);</span>
+<span class="fc" id="L90">                System.out.printf(&quot;%-10s | %-20s%n&quot;, rs.getString(&quot;employee_id&quot;), name);</span>
+<span class="fc" id="L91">            }</span>
+<span class="nc" id="L92">        } catch (Exception e) {</span>
+<span class="nc" id="L93">            logger.error(&quot;Failed to fetch team: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L94">        }</span>
+<span class="fc" id="L95">    }</span>
+
+    /**
+     * Check if an employee is a direct report of the manager.
+     * 
+     * @param managerId Manager's Employee ID.
+     * @param empId     Employee ID to check.
+     * @return true if associated, false otherwise.
+     */
+    public static boolean isTeamMember(String managerId, String empId) {
+        try {
+<span class="fc" id="L106">            return employeeDAO.isReportee(managerId, empId);</span>
+<span class="fc" id="L107">        } catch (Exception e) {</span>
+<span class="fc" id="L108">            logger.error(&quot;Error in viewTeamDirectory&quot;, e);</span>
+        }
+<span class="fc" id="L110">        return false;</span>
+    }
+
+    /*
+     * =============================================================================
+     * ======
+     * LEAVE MANAGEMENT
+     * =============================================================================
+     * ======
+     */
+
+    /**
+     * View pending leave requests from team members.
+     * 
+     * @param managerId Manager's Employee ID.
+     */
+    public static void viewTeamLeaveRequests(String managerId) {
+        try {
+<span class="fc" id="L128">            ResultSet rs = leaveDAO.getTeamLeaveRequests(managerId);</span>
+<span class="fc" id="L129">            System.out.println(&quot;\n--- TEAM LEAVE REQUESTS ---&quot;);</span>
+
+<span class="fc" id="L131">            boolean found = false;</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L133">                found = true;</span>
+<span class="fc" id="L134">                String name = rs.getString(&quot;first_name&quot;) + &quot; &quot;</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">                        + (rs.getString(&quot;last_name&quot;) != null ? rs.getString(&quot;last_name&quot;) : &quot;&quot;);</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">                String dept = rs.getString(&quot;department_name&quot;) != null ? rs.getString(&quot;department_name&quot;) : &quot;N/A&quot;;</span>
+
+<span class="fc" id="L138">                System.out.println(</span>
+<span class="fc" id="L139">                        &quot;ID: &quot; + rs.getInt(&quot;leave_application_id&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L140">                                &quot;Emp: &quot; + rs.getString(&quot;employee_id&quot;) + &quot; (&quot; + name + &quot;, &quot; + dept + &quot;) | &quot; +</span>
+<span class="fc" id="L141">                                rs.getDate(&quot;start_date&quot;) + &quot; -&gt; &quot; +</span>
+<span class="fc" id="L142">                                rs.getDate(&quot;end_date&quot;) + &quot; | Status: &quot; + rs.getString(&quot;status&quot;));</span>
+<span class="fc" id="L143">            }</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">            if (!found)</span>
+<span class="fc" id="L145">                System.out.println(&quot;No pending requests.&quot;);</span>
+
+<span class="nc" id="L147">        } catch (Exception e) {</span>
+<span class="nc" id="L148">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;leave requests: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L149">        }</span>
+<span class="fc" id="L150">    }</span>
+
+    /**
+     * Checks if a specific leave request belongs to a member of the manager's team
+     * and is currently in a pending state.
+     * 
+     * @param managerId The Manager's ID.
+     * @param leaveId   The Leave Application ID.
+     * @return true if the leave is pending and belongs to a reportee.
+     */
+    public static boolean isPendingLeave(String managerId, int leaveId) {
+        try {
+<span class="fc" id="L162">            ResultSet rs = leaveDAO.getTeamLeaveRequests(managerId);</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="pc bpc" id="L164" title="1 of 2 branches missed.">                if (rs.getInt(&quot;leave_application_id&quot;) == leaveId) {</span>
+<span class="nc" id="L165">                    return true;</span>
+                }
+            }
+<span class="nc" id="L168">        } catch (Exception e) {</span>
+<span class="nc" id="L169">            logger.error(&quot;Error checking reportee relationship&quot;, e);</span>
+<span class="fc" id="L170">        }</span>
+<span class="fc" id="L171">        return false;</span>
+    }
+
+    /**
+     * Processes a leave request by updating its status (Approve/Reject) and logging
+     * the action.
+     * Sends a notification to the employee regarding the decision.
+     * 
+     * @param managerId The Manager processing the request.
+     * @param leaveId   The Leave Request ID.
+     * @param status    The new status (APPROVED/REJECTED).
+     * @param comments  Optional comments providing reasoning.
+     */
+    public static void processLeave(String managerId, int leaveId, String status, String comments) {
+        try {
+<span class="fc" id="L186">            String targetEmpId = leaveDAO.getEmployeeIdForLeave(leaveId); // Get target employee</span>
+
+<span class="fc" id="L188">            leaveDAO.updateLeaveStatus(leaveId, managerId, status, comments);</span>
+
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">            if (targetEmpId != null) {</span>
+<span class="fc" id="L191">                com.revworkforce.service.NotificationService.notifyLeaveUpdate(targetEmpId, status);</span>
+            }
+
+<span class="fc" id="L194">            AuditService.log(</span>
+                    managerId,
+                    status,
+                    &quot;LEAVE_APPLICATIONS&quot;,
+<span class="fc" id="L198">                    String.valueOf(leaveId),</span>
+                    &quot;Manager processed leave&quot;);
+
+<span class="fc" id="L201">            logger.info(&quot;Leave request {} processed by manager {}. Status: {}&quot;, leaveId, managerId, status);</span>
+
+<span class="fc" id="L203">            System.out.println(&quot;Leave &quot; + status + &quot; successfully&quot;);</span>
+
+<span class="fc" id="L205">        } catch (Exception e) {</span>
+<span class="fc" id="L206">            logger.error(&quot;Leave processing failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L207">        }</span>
+<span class="fc" id="L208">    }</span>
+
+    public static void viewTeamLeaveCalendar(String managerId) {
+        try {
+<span class="fc" id="L212">            ResultSet rs = leaveDAO.getTeamLeaveCalendar(managerId);</span>
+
+<span class="fc" id="L214">            System.out.println(&quot;\n--- TEAM LEAVE CALENDAR ---&quot;);</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L216">                System.out.println(</span>
+<span class="fc" id="L217">                        rs.getString(&quot;employee_id&quot;) +</span>
+<span class="fc" id="L218">                                &quot; | &quot; + rs.getString(&quot;leave_type_name&quot;) +</span>
+<span class="fc" id="L219">                                &quot; | &quot; + rs.getDate(&quot;start_date&quot;) +</span>
+<span class="fc" id="L220">                                &quot; -&gt; &quot; + rs.getDate(&quot;end_date&quot;));</span>
+            }
+<span class="nc" id="L222">        } catch (Exception e) {</span>
+<span class="nc" id="L223">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;team leave calendar: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L224">        }</span>
+<span class="fc" id="L225">    }</span>
+
+    public static void revokeApprovedLeave(String managerId, int leaveId, String reason) {
+        try {
+            // Verify if leave is approved and belongs to team
+            // (Simplified check: assuming ID is sufficient and trusted or checked below)
+
+            // Re-verify it is capable of being revoked (should be approved)
+            // Using generic update for now, ideally strictly check status
+
+<span class="fc" id="L235">            leaveDAO.updateLeaveStatus(leaveId, managerId, &quot;REVOKED&quot;, reason);</span>
+
+<span class="fc" id="L237">            String targetEmpId = leaveDAO.getEmployeeIdForLeave(leaveId);</span>
+<span class="pc bpc" id="L238" title="1 of 2 branches missed.">            if (targetEmpId != null) {</span>
+<span class="fc" id="L239">                com.revworkforce.service.NotificationService.notifyLeaveUpdate(targetEmpId, &quot;REVOKED&quot;);</span>
+            }
+
+<span class="fc" id="L242">            AuditService.log(</span>
+                    managerId,
+                    &quot;REVOKE&quot;,
+                    &quot;LEAVE_APPLICATIONS&quot;,
+<span class="fc" id="L246">                    String.valueOf(leaveId),</span>
+                    &quot;Manager revoked approved leave. Reason: &quot; + reason);
+
+<span class="fc" id="L249">            logger.info(&quot;Approved leave {} revoked by manager {}. Reason: {}&quot;, leaveId, managerId, reason);</span>
+
+<span class="fc" id="L251">            System.out.println(&quot;Leave revoked successfully.&quot;);</span>
+
+<span class="nc" id="L253">        } catch (Exception e) {</span>
+<span class="nc" id="L254">            logger.error(&quot;Failed to revoke leave: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L255">        }</span>
+<span class="fc" id="L256">    }</span>
+
+    public static void viewEmployeeLeaveCalendar(String empId) {
+        try {
+<span class="fc" id="L260">            ResultSet rs = leaveDAO.getApprovedLeavesForEmployee(empId);</span>
+
+<span class="fc" id="L262">            System.out.println(&quot;\n--- LEAVE CALENDAR: &quot; + empId + &quot; ---&quot;);</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L264">                System.out.println(</span>
+<span class="fc" id="L265">                        rs.getString(&quot;leave_type_name&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L266">                                rs.getDate(&quot;start_date&quot;) + &quot; -&gt; &quot; +</span>
+<span class="fc" id="L267">                                rs.getDate(&quot;end_date&quot;));</span>
+            }
+<span class="nc" id="L269">        } catch (Exception e) {</span>
+<span class="nc" id="L270">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;employee leave calendar: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L271">        }</span>
+<span class="fc" id="L272">    }</span>
+
+    public static void viewTeamLeaveBalances(String managerId) {
+        try {
+<span class="fc" id="L276">            ResultSet rs = leaveDAO.getTeamLeaveBalances(managerId);</span>
+
+<span class="fc" id="L278">            System.out.println(&quot;\n--- TEAM LEAVE BALANCES ---&quot;);</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L280">                System.out.println(</span>
+<span class="fc" id="L281">                        rs.getString(&quot;employee_id&quot;) +</span>
+<span class="fc" id="L282">                                &quot; | &quot; + rs.getString(&quot;leave_type_name&quot;) +</span>
+<span class="fc" id="L283">                                &quot; | Total: &quot; + rs.getInt(&quot;total_allocated&quot;) +</span>
+<span class="fc" id="L284">                                &quot; | Used: &quot; + rs.getInt(&quot;used_leaves&quot;) +</span>
+<span class="fc" id="L285">                                &quot; | Available: &quot; + rs.getInt(&quot;available_leaves&quot;));</span>
+            }
+<span class="nc" id="L287">        } catch (Exception e) {</span>
+<span class="nc" id="L288">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;team leave balances: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L289">        }</span>
+<span class="fc" id="L290">    }</span>
+
+    /*
+     * =============================================================================
+     * ======
+     * ATTENDANCE &amp; PERFORMANCE
+     * =============================================================================
+     * ======
+     */
+
+    public static void viewTeamAttendance(String managerId) {
+        try {
+<span class="fc" id="L302">            ResultSet rs = attendanceDAO.getTeamAttendanceSummary(managerId);</span>
+<span class="fc" id="L303">            System.out.println(&quot;\n--- TEAM ATTENDANCE SUMMARY ---&quot;);</span>
+
+<span class="fc bfc" id="L305" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L306">                System.out.println(</span>
+<span class="fc" id="L307">                        rs.getString(&quot;employee_id&quot;) +</span>
+<span class="fc" id="L308">                                &quot; | Present: &quot; + rs.getInt(&quot;present_days&quot;) +</span>
+<span class="fc" id="L309">                                &quot; | Absent: &quot; + rs.getInt(&quot;absent_days&quot;));</span>
+            }
+<span class="nc" id="L311">        } catch (Exception e) {</span>
+<span class="nc" id="L312">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;attendance: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L313">        }</span>
+<span class="fc" id="L314">    }</span>
+
+    public static void viewTeamPerformance(String managerId) {
+        try {
+<span class="fc" id="L318">            ResultSet rs = performanceDAO.getTeamReviews(managerId);</span>
+<span class="fc" id="L319">            System.out.println(&quot;\n--- TEAM PERFORMANCE REVIEWS ---&quot;);</span>
+
+<span class="fc bfc" id="L321" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L322">                System.out.println(</span>
+<span class="fc" id="L323">                        rs.getInt(&quot;review_id&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L324">                                rs.getString(&quot;employee_id&quot;) + &quot; | &quot; +</span>
+<span class="fc" id="L325">                                rs.getString(&quot;status&quot;));</span>
+            }
+<span class="nc" id="L327">        } catch (Exception e) {</span>
+<span class="nc" id="L328">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;performance data: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L329">        }</span>
+<span class="fc" id="L330">    }</span>
+
+    /**
+     * Submits a performance review for a team member.
+     * Updates the rating and feedback, and notifies the employee.
+     * 
+     * @param managerId The Manager submitting the review.
+     * @param reviewId  The Review ID.
+     * @param feedback  Detailed qualitative feedback.
+     * @param rating    Quantitative rating (1-5).
+     */
+    public static void submitPerformanceReview(String managerId, int reviewId, String feedback, int rating) {
+        try {
+<span class="fc" id="L343">            String targetEmpId = performanceDAO.getEmployeeIdForReview(reviewId);</span>
+
+<span class="fc" id="L345">            performanceDAO.submitManagerFeedback(reviewId, feedback, rating);</span>
+
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">            if (targetEmpId != null) {</span>
+<span class="fc" id="L348">                com.revworkforce.service.NotificationService.notifyPerformanceFeedback(targetEmpId);</span>
+            }
+
+<span class="fc" id="L351">            AuditService.log(</span>
+                    managerId,
+                    &quot;REVIEW&quot;,
+                    &quot;PERFORMANCE_REVIEWS&quot;,
+<span class="fc" id="L355">                    String.valueOf(reviewId),</span>
+                    &quot;Manager submitted feedback&quot;);
+
+<span class="fc" id="L358">            logger.info(&quot;Performance review {} submitted by manager {}&quot;, reviewId, managerId);</span>
+
+<span class="fc" id="L360">            System.out.println(&quot;Performance review submitted&quot;);</span>
+
+<span class="nc" id="L362">        } catch (Exception e) {</span>
+<span class="nc" id="L363">            logger.error(&quot;Performance review failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L364">        }</span>
+<span class="fc" id="L365">    }</span>
+
+    public static void viewTeamGoals(String managerId) {
+        try {
+<span class="fc" id="L369">            ResultSet rs = performanceDAO.getTeamGoals(managerId);</span>
+
+<span class="fc" id="L371">            System.out.println(&quot;\n--- TEAM GOALS ---&quot;);</span>
+<span class="fc" id="L372">            System.out.println(&quot;ID | Employee ID | Priority | Progress | Deadline&quot;);</span>
+<span class="fc" id="L373">            System.out.println(&quot;---------------------------------------------------------&quot;);</span>
+<span class="fc bfc" id="L374" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L375">                System.out.println(</span>
+<span class="fc" id="L376">                        rs.getInt(&quot;goal_id&quot;) +</span>
+<span class="fc" id="L377">                                &quot; | &quot; + rs.getString(&quot;employee_id&quot;) +</span>
+<span class="fc" id="L378">                                &quot; | &quot; + rs.getString(&quot;priority&quot;) +</span>
+<span class="fc" id="L379">                                &quot; | Progress: &quot; + rs.getInt(&quot;progress_percentage&quot;) + &quot;%&quot; +</span>
+<span class="fc" id="L380">                                &quot; | Deadline: &quot; + rs.getDate(&quot;deadline&quot;));</span>
+            }
+<span class="nc" id="L382">        } catch (Exception e) {</span>
+<span class="nc" id="L383">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;team goals: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L384">        }</span>
+<span class="fc" id="L385">    }</span>
+
+    public static void viewGoalCompletionSummary(String managerId) {
+        try {
+<span class="fc" id="L389">            ResultSet rs = performanceDAO.getGoalCompletionSummary(managerId);</span>
+
+<span class="fc" id="L391">            System.out.println(&quot;\n--- GOAL COMPLETION SUMMARY ---&quot;);</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L393">                System.out.println(</span>
+<span class="fc" id="L394">                        rs.getString(&quot;employee_id&quot;) +</span>
+<span class="fc" id="L395">                                &quot; | Completed: &quot; + rs.getInt(&quot;completed_goals&quot;) +</span>
+<span class="fc" id="L396">                                &quot; / &quot; + rs.getInt(&quot;total_goals&quot;));</span>
+            }
+<span class="nc" id="L398">        } catch (Exception e) {</span>
+<span class="nc" id="L399">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;goal summary: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L400">        }</span>
+<span class="fc" id="L401">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

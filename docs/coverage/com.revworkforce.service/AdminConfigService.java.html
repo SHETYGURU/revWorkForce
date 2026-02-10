@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminConfigService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">AdminConfigService.java</span></div><h1>AdminConfigService.java</h1><pre class="source lang-java linenums">package com.revworkforce.service;
+
+import com.revworkforce.dao.*;
+import com.revworkforce.util.InputUtil;
+
+import java.sql.Date;
+
+<span class="nc" id="L8">public class AdminConfigService {</span>
+
+<span class="fc" id="L10">    private static DepartmentDAO departmentDAO = new DepartmentDAO();</span>
+<span class="fc" id="L11">    private static DesignationDAO designationDAO = new DesignationDAO();</span>
+<span class="fc" id="L12">    private static PerformanceCycleDAO cycleDAO = new PerformanceCycleDAO();</span>
+<span class="fc" id="L13">    private static SystemPolicyDAO policyDAO = new SystemPolicyDAO();</span>
+<span class="fc" id="L14">    private static HolidayDAO holidayDAO = new HolidayDAO();</span>
+
+    private static String getAdminId() {
+<span class="pc bpc" id="L17" title="1 of 2 branches missed.">        return com.revworkforce.context.SessionContext.get() != null</span>
+<span class="fc" id="L18">                ? com.revworkforce.context.SessionContext.get().getEmployeeId()</span>
+<span class="nc" id="L19">                : &quot;ADMIN001&quot;; // Fallback</span>
+    }
+
+    public static void manageDepartments() {
+        while (true) {
+<span class="fc" id="L24">            System.out.println(&quot;\n--- MANAGE DEPARTMENTS ---&quot;);</span>
+<span class="fc" id="L25">            System.out.println(&quot;1. Add Department&quot;);</span>
+<span class="fc" id="L26">            System.out.println(&quot;2. View All Departments&quot;);</span>
+<span class="fc" id="L27">            System.out.println(&quot;3. Update Department&quot;);</span>
+<span class="fc" id="L28">            System.out.println(&quot;4. Delete Department&quot;);</span>
+<span class="fc" id="L29">            System.out.println(&quot;5. Back&quot;);</span>
+
+<span class="fc" id="L31">            int choice = InputUtil.readInt(&quot;Select Option: &quot;);</span>
+
+            try {
+<span class="pc bpc" id="L34" title="1 of 6 branches missed.">                switch (choice) {</span>
+                    case 1 -&gt; {
+<span class="fc" id="L36">                        String name = InputUtil.readString(&quot;New Department Name: &quot;);</span>
+<span class="fc" id="L37">                        departmentDAO.addDepartment(name);</span>
+<span class="fc" id="L38">                        AuditService.log(getAdminId(), &quot;CREATE&quot;, &quot;DEPARTMENTS&quot;, &quot;Name&quot;, name, &quot;Department added&quot;);</span>
+<span class="fc" id="L39">                        System.out.println(&quot;Department added successfully.&quot;);</span>
+<span class="fc" id="L40">                    }</span>
+                    case 2 -&gt; {
+<span class="fc" id="L42">                        System.out.println(&quot;\n--- ALL DEPARTMENTS ---&quot;);</span>
+<span class="fc" id="L43">                        try (java.sql.ResultSet rs = departmentDAO.getAllDepartments();</span>
+<span class="fc" id="L44">                                java.sql.Statement stmt = rs.getStatement();</span>
+<span class="fc" id="L45">                                java.sql.Connection con = stmt.getConnection()) {</span>
+
+<span class="fc" id="L47">                            System.out.printf(&quot;%-15s %-30s%n&quot;, &quot;ID&quot;, &quot;NAME&quot;);</span>
+<span class="fc" id="L48">                            System.out.println(&quot;---------------------------------------------&quot;);</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">                            while (rs.next()) {</span>
+<span class="fc" id="L50">                                System.out.printf(&quot;%-15s %-30s%n&quot;,</span>
+<span class="fc" id="L51">                                        rs.getString(&quot;department_id&quot;),</span>
+<span class="fc" id="L52">                                        rs.getString(&quot;department_name&quot;));</span>
+                            }
+                        }
+<span class="fc" id="L55">                    }</span>
+                    case 3 -&gt; {
+<span class="fc" id="L57">                        String id = InputUtil.readString(&quot;Department ID to Update: &quot;);</span>
+<span class="fc" id="L58">                        String name = InputUtil.readString(&quot;New Department Name: &quot;);</span>
+<span class="fc" id="L59">                        departmentDAO.updateDepartment(id, name);</span>
+<span class="fc" id="L60">                        AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;DEPARTMENTS&quot;, &quot;Name&quot;, id,</span>
+                                &quot;Department name changed to &quot; + name);
+<span class="fc" id="L62">                        System.out.println(&quot;Department updated successfully.&quot;);</span>
+<span class="fc" id="L63">                    }</span>
+                    case 4 -&gt; {
+<span class="fc" id="L65">                        String id = InputUtil.readString(&quot;Department ID to Delete: &quot;);</span>
+<span class="fc" id="L66">                        departmentDAO.deleteDepartment(id);</span>
+<span class="fc" id="L67">                        AuditService.log(getAdminId(), &quot;DELETE&quot;, &quot;DEPARTMENTS&quot;, &quot;All&quot;, id, &quot;Department deleted&quot;);</span>
+<span class="fc" id="L68">                        System.out.println(&quot;Department deleted successfully.&quot;);</span>
+<span class="fc" id="L69">                    }</span>
+                    case 5 -&gt; {
+<span class="fc" id="L71">                        return;</span>
+                    }
+<span class="nc" id="L73">                    default -&gt; System.out.println(&quot;Invalid option.&quot;);</span>
+                }
+<span class="fc" id="L75">            } catch (Exception e) {</span>
+<span class="fc" id="L76">                System.err.println(&quot;Operation failed: &quot; + e.getMessage());</span>
+<span class="fc" id="L77">            }</span>
+<span class="fc" id="L78">        }</span>
+    }
+
+    public static void manageDesignations() {
+        while (true) {
+<span class="fc" id="L83">            System.out.println(&quot;\n--- MANAGE DESIGNATIONS ---&quot;);</span>
+<span class="fc" id="L84">            System.out.println(&quot;1. Add Designation&quot;);</span>
+<span class="fc" id="L85">            System.out.println(&quot;2. View All Designations&quot;);</span>
+<span class="fc" id="L86">            System.out.println(&quot;3. Update Designation&quot;);</span>
+<span class="fc" id="L87">            System.out.println(&quot;4. Delete Designation&quot;);</span>
+<span class="fc" id="L88">            System.out.println(&quot;5. Back&quot;);</span>
+
+<span class="fc" id="L90">            int choice = InputUtil.readInt(&quot;Select Option: &quot;);</span>
+
+            try {
+<span class="pc bpc" id="L93" title="2 of 6 branches missed.">                switch (choice) {</span>
+                    case 1 -&gt; {
+<span class="fc" id="L95">                        System.out.println(&quot;\n--- ADD DESIGNATION ---&quot;);</span>
+<span class="fc" id="L96">                        String name = InputUtil.readString(&quot;New Designation Name: &quot;);</span>
+<span class="fc" id="L97">                        designationDAO.addDesignation(name);</span>
+<span class="fc" id="L98">                        AuditService.log(getAdminId(), &quot;CREATE&quot;, &quot;DESIGNATIONS&quot;, &quot;Name&quot;, name, &quot;Designation added&quot;);</span>
+<span class="fc" id="L99">                        System.out.println(&quot;Designation added successfully.&quot;);</span>
+<span class="fc" id="L100">                    }</span>
+                    case 2 -&gt; {
+<span class="nc" id="L102">                        System.out.println(&quot;\n--- ALL DESIGNATIONS ---&quot;);</span>
+<span class="nc" id="L103">                        try (java.sql.ResultSet rs = designationDAO.getAllDesignations();</span>
+<span class="nc" id="L104">                                java.sql.Statement stmt = rs.getStatement();</span>
+<span class="nc" id="L105">                                java.sql.Connection con = stmt.getConnection()) {</span>
+
+<span class="nc" id="L107">                            System.out.printf(&quot;%-15s %-30s%n&quot;, &quot;ID&quot;, &quot;NAME&quot;);</span>
+<span class="nc" id="L108">                            System.out.println(&quot;---------------------------------------------&quot;);</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">                            while (rs.next()) {</span>
+<span class="nc" id="L110">                                System.out.printf(&quot;%-15s %-30s%n&quot;,</span>
+<span class="nc" id="L111">                                        rs.getString(&quot;designation_id&quot;),</span>
+<span class="nc" id="L112">                                        rs.getString(&quot;designation_name&quot;));</span>
+                            }
+                        }
+<span class="nc" id="L115">                    }</span>
+                    case 3 -&gt; {
+<span class="fc" id="L117">                        System.out.println(&quot;\n--- UPDATE DESIGNATION ---&quot;);</span>
+<span class="fc" id="L118">                        String id = InputUtil.readString(&quot;Designation ID to Update: &quot;);</span>
+<span class="fc" id="L119">                        String name = InputUtil.readString(&quot;New Designation Name: &quot;);</span>
+<span class="fc" id="L120">                        designationDAO.updateDesignation(id, name);</span>
+<span class="fc" id="L121">                        AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;DESIGNATIONS&quot;, &quot;Name&quot;, id,</span>
+                                &quot;Designation name changed to &quot; + name);
+<span class="fc" id="L123">                        System.out.println(&quot;Designation updated successfully.&quot;);</span>
+<span class="fc" id="L124">                    }</span>
+                    case 4 -&gt; {
+<span class="fc" id="L126">                        System.out.println(&quot;\n--- DELETE DESIGNATION ---&quot;);</span>
+<span class="fc" id="L127">                        String id = InputUtil.readString(&quot;Designation ID to Delete: &quot;);</span>
+<span class="fc" id="L128">                        designationDAO.deleteDesignation(id);</span>
+<span class="fc" id="L129">                        AuditService.log(getAdminId(), &quot;DELETE&quot;, &quot;DESIGNATIONS&quot;, &quot;All&quot;, id, &quot;Designation deleted&quot;);</span>
+<span class="fc" id="L130">                        System.out.println(&quot;Designation deleted successfully.&quot;);</span>
+<span class="fc" id="L131">                    }</span>
+                    case 5 -&gt; {
+<span class="fc" id="L133">                        return;</span>
+                    }
+<span class="nc" id="L135">                    default -&gt; System.out.println(&quot;Invalid option.&quot;);</span>
+                }
+<span class="fc" id="L137">            } catch (Exception e) {</span>
+<span class="fc" id="L138">                System.err.println(&quot;Operation failed: &quot; + e.getMessage());</span>
+<span class="fc" id="L139">            }</span>
+<span class="fc" id="L140">        }</span>
+    }
+
+    public static void configurePerformanceCycles() {
+        try {
+<span class="fc" id="L145">            System.out.println(&quot;\n--- CONFIGURE PERFORMANCE CYCLE ---&quot;);</span>
+<span class="fc" id="L146">            String name = InputUtil.readString(&quot;Cycle Name (e.g. 2024 Appraisal): &quot;);</span>
+<span class="fc" id="L147">            Date start = Date.valueOf(InputUtil.readString(&quot;Start Date (YYYY-MM-DD): &quot;));</span>
+<span class="fc" id="L148">            Date end = Date.valueOf(InputUtil.readString(&quot;End Date (YYYY-MM-DD): &quot;));</span>
+
+<span class="fc" id="L150">            cycleDAO.createCycle(name, start, end);</span>
+<span class="fc" id="L151">            AuditService.log(getAdminId(), &quot;CREATE&quot;, &quot;PERFORMANCE_CYCLES&quot;, &quot;Name/Dates&quot;, name,</span>
+                    &quot;Performance cycle created&quot;);
+<span class="fc" id="L153">            System.out.println(&quot;Performance cycle configured successfully.&quot;);</span>
+<span class="nc" id="L154">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L155">            System.out.println(&quot;Invalid date format.&quot;);</span>
+<span class="nc" id="L156">        } catch (Exception e) {</span>
+<span class="nc" id="L157">            System.err.println(&quot;Failed to create cycle: &quot; + e.getMessage());</span>
+<span class="pc" id="L158">        }</span>
+<span class="fc" id="L159">    }</span>
+
+    public static void manageSystemPolicies() {
+        while (true) {
+<span class="fc" id="L163">            System.out.println(&quot;\n--- MANAGE SYSTEM POLICIES ---&quot;);</span>
+<span class="fc" id="L164">            System.out.println(&quot;1. Add/Update Policy&quot;);</span>
+<span class="fc" id="L165">            System.out.println(&quot;2. View All Policies&quot;);</span>
+<span class="fc" id="L166">            System.out.println(&quot;3. Delete Policy&quot;);</span>
+<span class="fc" id="L167">            System.out.println(&quot;4. Back&quot;);</span>
+
+<span class="fc" id="L169">            int choice = InputUtil.readInt(&quot;Select Option: &quot;);</span>
+
+            try {
+<span class="pc bpc" id="L172" title="2 of 5 branches missed.">                switch (choice) {</span>
+                    case 1 -&gt; {
+<span class="fc" id="L174">                        String key = InputUtil.readString(&quot;Policy Name (Key): &quot;);</span>
+<span class="fc" id="L175">                        String value = InputUtil.readString(&quot;Policy Value: &quot;);</span>
+<span class="fc" id="L176">                        policyDAO.updatePolicy(key, value);</span>
+<span class="fc" id="L177">                        AuditService.log(getAdminId(), &quot;UPDATE&quot;, &quot;SYSTEM_POLICIES&quot;, &quot;Value&quot;, key,</span>
+                                &quot;Policy updated/created&quot;);
+<span class="fc" id="L179">                        System.out.println(&quot;Policy saved successfully.&quot;);</span>
+<span class="fc" id="L180">                    }</span>
+                    case 2 -&gt; {
+<span class="nc" id="L182">                        policyDAO.printPolicies();</span>
+<span class="nc" id="L183">                    }</span>
+                    case 3 -&gt; {
+<span class="fc" id="L185">                        policyDAO.printPolicies();</span>
+<span class="fc" id="L186">                        String key = InputUtil.readString(&quot;Policy Name to Delete: &quot;);</span>
+<span class="fc" id="L187">                        policyDAO.deletePolicy(key);</span>
+<span class="fc" id="L188">                        AuditService.log(getAdminId(), &quot;DELETE&quot;, &quot;SYSTEM_POLICIES&quot;, &quot;All&quot;, key, &quot;Policy deleted&quot;);</span>
+<span class="fc" id="L189">                        System.out.println(&quot;Policy deleted successfully.&quot;);</span>
+<span class="fc" id="L190">                    }</span>
+                    case 4 -&gt; {
+<span class="fc" id="L192">                        return;</span>
+                    }
+<span class="nc" id="L194">                    default -&gt; System.out.println(&quot;Invalid option.&quot;);</span>
+                }
+<span class="nc" id="L196">            } catch (Exception e) {</span>
+<span class="nc" id="L197">                System.err.println(&quot;Operation failed: &quot; + e.getMessage());</span>
+<span class="fc" id="L198">            }</span>
+<span class="fc" id="L199">        }</span>
+    }
+
+    public static void configureHolidays() {
+        try {
+<span class="fc" id="L204">            System.out.println(&quot;\n--- ADD HOLIDAY ---&quot;);</span>
+<span class="fc" id="L205">            String name = InputUtil.readString(&quot;Holiday Name: &quot;);</span>
+
+<span class="fc" id="L207">            Date date = null;</span>
+<span class="fc" id="L208">            int year = 0;</span>
+
+<span class="fc bfc" id="L210" title="All 2 branches covered.">            while (date == null) {</span>
+                try {
+<span class="fc" id="L212">                    String dateStr = InputUtil.readString(&quot;Date (YYYY-MM-DD): &quot;);</span>
+<span class="fc" id="L213">                    Date tempDate = Date.valueOf(dateStr);</span>
+<span class="fc" id="L214">                    java.time.LocalDate localDate = tempDate.toLocalDate();</span>
+
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">                    if (localDate.isBefore(java.time.LocalDate.now())) {</span>
+<span class="nc" id="L217">                        System.out.println(&quot;Error: Cannot configure holiday in the past. Please try again.&quot;);</span>
+                    } else {
+<span class="fc" id="L219">                        date = tempDate;</span>
+<span class="fc" id="L220">                        year = localDate.getYear();</span>
+                    }
+<span class="nc" id="L222">                } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L223">                    System.out.println(&quot;Invalid date format. Please use YYYY-MM-DD.&quot;);</span>
+<span class="pc" id="L224">                }</span>
+            }
+
+<span class="fc" id="L227">            holidayDAO.addHoliday(name, date, year);</span>
+<span class="fc" id="L228">            AuditService.log(getAdminId(), &quot;CREATE&quot;, &quot;HOLIDAYS&quot;, &quot;Date&quot;, name, &quot;Holiday added: &quot; + date);</span>
+<span class="fc" id="L229">            System.out.println(&quot;Holiday configured successfully.&quot;);</span>
+<span class="nc" id="L230">        } catch (Exception e) {</span>
+<span class="nc" id="L231">            System.err.println(&quot;Failed to add holiday: &quot; + e.getMessage());</span>
+<span class="fc" id="L232">        }</span>
+<span class="fc" id="L233">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

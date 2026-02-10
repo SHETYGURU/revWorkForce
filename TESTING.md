@@ -74,7 +74,9 @@ void testRegisterEmployee_Success() {
 ## 5. Test Coverage Reporting
 We use **JaCoCo** to track code coverage. After running tests, a comprehensive report is generated.
 
-**[View Full Coverage Report](site/jacoco/index.html)**
+**[View Full Coverage Report](docs/coverage/index.html)**
+
+
 
 ## 6. Future Improvements
 *   **Integration Testing**: Setup an H2 in-memory database to test DAO queries directly.

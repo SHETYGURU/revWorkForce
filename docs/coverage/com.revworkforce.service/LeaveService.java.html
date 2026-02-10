@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LeaveService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">LeaveService.java</span></div><h1>LeaveService.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.service;
+
+import com.revworkforce.dao.LeaveDAO;
+import com.revworkforce.util.InputUtil;
+import com.revworkforce.util.MessageConstants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.Date;
+import java.sql.ResultSet;
+
+/**
+ * Service class for Leave Management operations.
+ * Handles viewing balances, applying for leave, leave cancellation, and
+ * calendar views.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="nc" id="L22">public class LeaveService {</span>
+
+<span class="fc" id="L24">    private static final Logger logger = LogManager.getLogger(LeaveService.class);</span>
+
+<span class="fc" id="L26">    private static LeaveDAO dao = new LeaveDAO();</span>
+
+    /**
+     * View leave balance for the logged-in employee.
+     *
+     * @param empId Employee ID.
+     */
+    public static void viewLeaveBalance(String empId) {
+        try {
+<span class="fc" id="L35">            ResultSet rs = dao.getLeaveBalances(empId);</span>
+<span class="fc" id="L36">            System.out.println(&quot;\n--- LEAVE BALANCE ---&quot;);</span>
+<span class="fc" id="L37">            boolean found = false;</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L39">                found = true;</span>
+<span class="nc" id="L40">                System.out.println(</span>
+<span class="nc" id="L41">                        rs.getString(&quot;leave_type_name&quot;) +</span>
+<span class="nc" id="L42">                                &quot; | Total: &quot; + rs.getInt(&quot;total_allocated&quot;) +</span>
+<span class="nc" id="L43">                                &quot; | Used: &quot; + rs.getInt(&quot;used_leaves&quot;) +</span>
+<span class="nc" id="L44">                                &quot; | Available: &quot; + rs.getInt(&quot;available_leaves&quot;));</span>
+            }
+<span class="nc bnc" id="L46" title="All 2 branches missed.">            if (!found) {</span>
+<span class="nc" id="L47">                System.out.println(&quot;No leave balance records found.&quot;);</span>
+            }
+<span class="fc" id="L49">        } catch (Exception e) {</span>
+<span class="fc" id="L50">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;leave balance: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L51">        }</span>
+<span class="fc" id="L52">    }</span>
+
+    /**
+     * Applies for a new leave request.
+     * Prompts user for Leave Type, Dates, and Reason.
+     * Validates date logic (End Date &gt;= Start Date).
+     *
+     * @param empId Employee ID of the applicant.
+     */
+    public static void applyLeave(String empId) {
+        try {
+            // Suggest implementing a 'View Leave Types' here first for better UX
+            // For now, prompt ID directly as per existing flow
+<span class="fc" id="L65">            int leaveType = InputUtil.readInt(&quot;Leave Type ID: &quot;);</span>
+<span class="fc" id="L66">            Date start = Date.valueOf(InputUtil.readString(&quot;Start Date (YYYY-MM-DD): &quot;));</span>
+<span class="fc" id="L67">            Date end = Date.valueOf(InputUtil.readString(&quot;End Date (YYYY-MM-DD): &quot;));</span>
+<span class="fc" id="L68">            String reason = InputUtil.readString(&quot;Reason: &quot;);</span>
+
+            // Basic validation
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            if (end.before(start)) {</span>
+<span class="fc" id="L72">                System.out.println(&quot;Error: End date cannot be before start date.&quot;);</span>
+<span class="fc" id="L73">                return;</span>
+            }
+
+<span class="fc" id="L76">            dao.applyLeave(empId, leaveType, start, end, reason);</span>
+<span class="fc" id="L77">            AuditService.log(empId, &quot;CREATE&quot;, &quot;LEAVE_APPLICATIONS&quot;, &quot;NEW&quot;, &quot;Leave applied&quot;);</span>
+
+<span class="fc" id="L79">            logger.info(&quot;Leave applied by employee {}. Type: {}, Start: {}, End: {}&quot;, empId, leaveType, start, end);</span>
+
+<span class="fc" id="L81">            System.out.println(&quot;Leave applied successfully. Status: PENDING&quot;);</span>
+<span class="fc" id="L82">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L83">            System.out.println(&quot;Invalid date format. Please use YYYY-MM-DD.&quot;);</span>
+<span class="fc" id="L84">        } catch (Exception e) {</span>
+<span class="fc" id="L85">            logger.error(&quot;Leave application failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L86">        }</span>
+<span class="fc" id="L87">    }</span>
+
+    /**
+     * View all leaves applied by the employee.
+     *
+     * @param empId Employee ID.
+     */
+    public static void viewMyLeaves(String empId) {
+        try {
+<span class="fc" id="L96">            ResultSet rs = dao.getMyLeaves(empId);</span>
+<span class="fc" id="L97">            System.out.println(&quot;\n--- MY LEAVES ---&quot;);</span>
+<span class="fc" id="L98">            boolean found = false;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L100">                found = true;</span>
+<span class="nc" id="L101">                System.out.println(</span>
+<span class="nc" id="L102">                        &quot;ID: &quot; + rs.getInt(&quot;leave_application_id&quot;) +</span>
+<span class="nc" id="L103">                                &quot; | &quot; + rs.getDate(&quot;start_date&quot;) +</span>
+<span class="nc" id="L104">                                &quot; -&gt; &quot; + rs.getDate(&quot;end_date&quot;) +</span>
+<span class="nc" id="L105">                                &quot; | &quot; + rs.getString(&quot;status&quot;));</span>
+            }
+<span class="nc bnc" id="L107" title="All 2 branches missed.">            if (!found) {</span>
+<span class="nc" id="L108">                System.out.println(&quot;No leave applications found.&quot;);</span>
+            }
+<span class="fc" id="L110">        } catch (Exception e) {</span>
+<span class="fc" id="L111">            logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + &quot;leaves: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L112">        }</span>
+<span class="fc" id="L113">    }</span>
+
+    /**
+     * Cancels a pending leave request.
+     * Allows employees to withdraw their application before approval.
+     *
+     * @param empId Employee ID.
+     */
+    public static void cancelLeave(String empId) {
+<span class="fc" id="L122">        int leaveId = InputUtil.readInt(&quot;Enter Leave Application ID to cancel: &quot;);</span>
+        try {
+<span class="fc" id="L124">            dao.cancelLeave(leaveId, empId);</span>
+<span class="fc" id="L125">            AuditService.log(empId, &quot;CANCEL&quot;, &quot;LEAVE_APPLICATIONS&quot;, String.valueOf(leaveId), &quot;Leave cancelled&quot;);</span>
+<span class="fc" id="L126">            logger.info(&quot;Leave application {} cancelled by employee {}&quot;, leaveId, empId);</span>
+<span class="fc" id="L127">            System.out.println(&quot;Leave cancelled (if it was pending).&quot;);</span>
+<span class="fc" id="L128">        } catch (Exception e) {</span>
+<span class="fc" id="L129">            logger.error(&quot;Cancel failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L130">        }</span>
+<span class="fc" id="L131">    }</span>
+
+    /**
+     * View company holiday calendar.
+     */
+    public static void viewHolidays() {
+<span class="fc" id="L137">        System.out.println(&quot;\n--- HOLIDAY CALENDAR ---&quot;);</span>
+        // Needs HolidayDAO implementation - simply print stub for now or SQL query
+        // Ideally: dao.getHolidays()
+<span class="fc" id="L140">        System.out.println(&quot;feature coming soon...&quot;);</span>
+<span class="fc" id="L141">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

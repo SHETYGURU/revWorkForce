@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LeaveDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.dao</a> &gt; <span class="el_source">LeaveDAO.java</span></div><h1>LeaveDAO.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.dao;
+
+import com.revworkforce.util.DBConnection;
+
+import java.sql.*;
+
+/**
+ * DAO for Leave Management.
+ * Handles leave applications, balance tracking, and approval workflow updates.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="fc" id="L16">public class LeaveDAO {</span>
+
+    public ResultSet getLeaveBalances(String empId) throws Exception {
+<span class="fc" id="L19">        String sql = &quot;&quot;&quot;</span>
+                    SELECT lt.leave_type_name, lb.total_allocated,
+                           lb.used_leaves, lb.available_leaves
+                    FROM leave_balances lb
+                    JOIN leave_types lt ON lb.leave_type_id = lt.leave_type_id
+                    WHERE lb.employee_id = ?
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L27">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L28">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L29">        ps.setString(1, empId);</span>
+<span class="fc" id="L30">        return ps.executeQuery();</span>
+    }
+
+    /**
+     * Retrieves pending leave requests for a manager's team.
+     * 
+     * @param managerId The Manager's Employee ID.
+     * @return ResultSet of pending leaves.
+     * @throws Exception if query fails.
+     */
+    public ResultSet getTeamLeaveRequests(String managerId) throws Exception {
+
+<span class="fc" id="L42">        String sql = &quot;&quot;&quot;</span>
+                    SELECT la.leave_application_id,
+                           la.employee_id,
+                           e.first_name,
+                           e.last_name,
+                           d.department_name,
+                           la.start_date,
+                           la.end_date,
+                           la.status
+                    FROM leave_applications la
+                    JOIN employees e ON la.employee_id = e.employee_id
+                    LEFT JOIN departments d ON e.department_id = d.department_id
+                    WHERE e.manager_id = ?
+                      AND la.status = 'PENDING'
+                    ORDER BY la.applied_date
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L59">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L60">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L61">        ps.setString(1, managerId);</span>
+<span class="fc" id="L62">        return ps.executeQuery();</span>
+    }
+
+    /**
+     * Updates the status of a leave application (e.g., APPROVED, REJECTED).
+     * Records the reviewer and comments.
+     * 
+     * @param leaveId   The Leave Application ID.
+     * @param managerId The Reviewer's ID.
+     * @param status    The new status.
+     * @param comments  Optional comments.
+     * @throws Exception if update fails.
+     */
+    public void updateLeaveStatus(
+            int leaveId,
+            String managerId,
+            String status,
+            String comments) throws Exception {
+
+<span class="fc" id="L81">        String sql = &quot;&quot;&quot;</span>
+                    UPDATE leave_applications
+                    SET status = ?, manager_comments = ?, reviewed_by = ?, reviewed_date = SYSDATE
+                    WHERE leave_application_id = ?
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L87">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L88">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L90">            ps.setString(1, status);</span>
+<span class="fc" id="L91">            ps.setString(2, comments);</span>
+<span class="fc" id="L92">            ps.setString(3, managerId);</span>
+<span class="fc" id="L93">            ps.setInt(4, leaveId);</span>
+<span class="fc" id="L94">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L96">    }</span>
+
+    public void applyLeave(
+            String empId,
+            int leaveTypeId,
+            Date start,
+            Date end,
+            String reason) throws Exception {
+
+<span class="fc" id="L105">        String sql = &quot;&quot;&quot;</span>
+                    INSERT INTO leave_applications
+                    (employee_id, leave_type_id, start_date, end_date,
+                     status, reason)
+                    VALUES (?, ?, ?, ?, 'PENDING', ?)
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L112">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L113">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L115">            ps.setString(1, empId);</span>
+<span class="fc" id="L116">            ps.setInt(2, leaveTypeId);</span>
+<span class="fc" id="L117">            ps.setDate(3, start);</span>
+<span class="fc" id="L118">            ps.setDate(4, end);</span>
+<span class="fc" id="L119">            ps.setString(5, reason);</span>
+<span class="fc" id="L120">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L122">    }</span>
+
+    public ResultSet getMyLeaves(String empId) throws Exception {
+<span class="fc" id="L125">        String sql = &quot;&quot;&quot;</span>
+                    SELECT leave_application_id, start_date, end_date, status
+                    FROM leave_applications
+                    WHERE employee_id = ?
+                    ORDER BY applied_date DESC
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L132">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L133">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L134">        ps.setString(1, empId);</span>
+<span class="fc" id="L135">        return ps.executeQuery();</span>
+    }
+
+    public ResultSet getLeaveStatistics() throws Exception {
+<span class="fc" id="L139">        String sql = &quot;SELECT status, COUNT(*) as count FROM leave_applications GROUP BY status&quot;;</span>
+<span class="fc" id="L140">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L141">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L142">        return ps.executeQuery();</span>
+    }
+
+    public ResultSet getDepartmentLeaveReport() throws Exception {
+<span class="fc" id="L146">        String sql = &quot;&quot;&quot;</span>
+                    SELECT d.department_name, e.first_name || ' ' || e.last_name as emp_name,
+                           lt.leave_type_name, SUM(la.end_date - la.start_date + 1) as days_taken
+                    FROM leave_applications la
+                    JOIN employees e ON la.employee_id = e.employee_id
+                    JOIN departments d ON e.department_id = d.department_id
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE la.status = 'APPROVED'
+                    GROUP BY d.department_name, e.first_name, e.last_name, lt.leave_type_name
+                    ORDER BY d.department_name, emp_name
+                &quot;&quot;&quot;;
+<span class="fc" id="L157">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L158">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L159">        return ps.executeQuery();</span>
+    }
+
+    public ResultSet getEmployeeLeaveReport(String empId) throws Exception {
+<span class="fc" id="L163">        String sql = &quot;&quot;&quot;</span>
+                    SELECT lt.leave_type_name, la.start_date, la.end_date, la.status, la.reason
+                    FROM leave_applications la
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE la.employee_id = ?
+                    ORDER BY la.start_date DESC
+                &quot;&quot;&quot;;
+<span class="fc" id="L170">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L171">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L172">        ps.setString(1, empId);</span>
+<span class="fc" id="L173">        return ps.executeQuery();</span>
+    }
+
+    public void cancelLeave(int leaveId, String empId) throws Exception {
+<span class="fc" id="L177">        String sql = &quot;&quot;&quot;</span>
+                    UPDATE leave_applications
+                    SET status = 'CANCELLED'
+                    WHERE leave_application_id = ?
+                      AND employee_id = ?
+                      AND status = 'PENDING'
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L185">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L186">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L188">            ps.setInt(1, leaveId);</span>
+<span class="fc" id="L189">            ps.setString(2, empId);</span>
+<span class="fc" id="L190">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L192">    }</span>
+
+    public ResultSet getTeamLeaveCalendar(String managerId) throws Exception {
+
+<span class="fc" id="L196">        String sql = &quot;&quot;&quot;</span>
+                    SELECT la.employee_id,
+                           la.start_date,
+                           la.end_date,
+                           lt.leave_type_name
+                    FROM leave_applications la
+                    JOIN employees e ON la.employee_id = e.employee_id
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE e.manager_id = ?
+                      AND la.status = 'APPROVED'
+                    ORDER BY la.start_date
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L209">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L210">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L211">        ps.setString(1, managerId);</span>
+<span class="fc" id="L212">        return ps.executeQuery();</span>
+    }
+
+    public ResultSet getApprovedLeavesForEmployee(String empId) throws Exception {
+<span class="fc" id="L216">        String sql = &quot;&quot;&quot;</span>
+                    SELECT la.employee_id,
+                           la.start_date,
+                           la.end_date,
+                           lt.leave_type_name
+                    FROM leave_applications la
+                    JOIN leave_types lt ON la.leave_type_id = lt.leave_type_id
+                    WHERE la.employee_id = ?
+                      AND la.status = 'APPROVED'
+                    ORDER BY la.start_date
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L228">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L229">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L230">        ps.setString(1, empId);</span>
+<span class="fc" id="L231">        return ps.executeQuery();</span>
+    }
+
+    public ResultSet getTeamLeaveBalances(String managerId) throws Exception {
+
+<span class="fc" id="L236">        String sql = &quot;&quot;&quot;</span>
+                    SELECT lb.employee_id,
+                           lt.leave_type_name,
+                           lb.total_allocated,
+                           lb.used_leaves,
+                           lb.available_leaves
+                    FROM leave_balances lb
+                    JOIN leave_types lt ON lb.leave_type_id = lt.leave_type_id
+                    JOIN employees e ON lb.employee_id = e.employee_id
+                    WHERE e.manager_id = ?
+                    ORDER BY lb.employee_id, lt.leave_type_name
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L249">        Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L250">        PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L251">        ps.setString(1, managerId);</span>
+<span class="fc" id="L252">        return ps.executeQuery();</span>
+    }
+
+    /**
+     * Assigns or updates the leave quota for an employee for a specific year.
+     * If a record exists, it updates the total allocated; otherwise, it inserts a
+     * new record.
+     * 
+     * @param empId       Employee ID.
+     * @param leaveTypeId Leave Type ID.
+     * @param year        The Year (e.g., 2024).
+     * @param total       Total days allocated.
+     * @throws Exception if database operation fails.
+     */
+    public void assignLeaveQuota(
+            String empId,
+            int leaveTypeId,
+            int year,
+            int total) throws Exception {
+
+<span class="fc" id="L272">        String updateSql = &quot;&quot;&quot;</span>
+                    UPDATE leave_balances
+                    SET total_allocated = ?,
+                        available_leaves = ? - used_leaves
+                    WHERE employee_id = ? AND leave_type_id = ? AND year = ?
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L279">        String insertSql = &quot;&quot;&quot;</span>
+                    INSERT INTO leave_balances
+                    (employee_id, leave_type_id, year,
+                     total_allocated, used_leaves, available_leaves)
+                    VALUES (?, ?, ?, ?, 0, ?)
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L286">        try (Connection con = DBConnection.getConnection()) {</span>
+<span class="fc" id="L287">            boolean updated = false;</span>
+<span class="fc" id="L288">            try (PreparedStatement ps = con.prepareStatement(updateSql)) {</span>
+<span class="fc" id="L289">                ps.setInt(1, total);</span>
+<span class="fc" id="L290">                ps.setInt(2, total);</span>
+<span class="fc" id="L291">                ps.setString(3, empId);</span>
+<span class="fc" id="L292">                ps.setInt(4, leaveTypeId);</span>
+<span class="fc" id="L293">                ps.setInt(5, year);</span>
+<span class="fc" id="L294">                int rows = ps.executeUpdate();</span>
+<span class="fc bfc" id="L295" title="All 2 branches covered.">                updated = (rows &gt; 0);</span>
+            }
+
+<span class="fc bfc" id="L298" title="All 2 branches covered.">            if (!updated) {</span>
+<span class="fc" id="L299">                try (PreparedStatement ps = con.prepareStatement(insertSql)) {</span>
+<span class="fc" id="L300">                    ps.setString(1, empId);</span>
+<span class="fc" id="L301">                    ps.setInt(2, leaveTypeId);</span>
+<span class="fc" id="L302">                    ps.setInt(3, year);</span>
+<span class="fc" id="L303">                    ps.setInt(4, total);</span>
+<span class="fc" id="L304">                    ps.setInt(5, total);</span>
+<span class="fc" id="L305">                    ps.executeUpdate();</span>
+                }
+            }
+        }
+<span class="fc" id="L309">    }</span>
+
+    public void adjustLeaveBalance(
+            int balanceId,
+            int total,
+            int used) throws Exception {
+
+<span class="fc" id="L316">        int available = total - used;</span>
+
+<span class="fc" id="L318">        String sql = &quot;&quot;&quot;</span>
+                    UPDATE leave_balances
+                    SET total_allocated = ?,
+                        used_leaves = ?,
+                        available_leaves = ?
+                    WHERE leave_balance_id = ?
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L326">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L327">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L329">            ps.setInt(1, total);</span>
+<span class="fc" id="L330">            ps.setInt(2, used);</span>
+<span class="fc" id="L331">            ps.setInt(3, available);</span>
+<span class="fc" id="L332">            ps.setInt(4, balanceId);</span>
+<span class="fc" id="L333">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L335">    }</span>
+
+    public void revokeApprovedLeave(int leaveId) throws Exception {
+
+<span class="fc" id="L339">        String sql = &quot;&quot;&quot;</span>
+                    UPDATE leave_applications
+                    SET status = 'REVOKED'
+                    WHERE leave_application_id = ?
+                      AND status = 'APPROVED'
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L346">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L347">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L349">            ps.setInt(1, leaveId);</span>
+<span class="fc" id="L350">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L352">    }</span>
+
+    public void addHoliday(String name, Date date) throws Exception {
+
+<span class="fc" id="L356">        String sql = &quot;&quot;&quot;</span>
+                    INSERT INTO holidays (holiday_name, holiday_date)
+                    VALUES (?, ?)
+                &quot;&quot;&quot;;
+
+<span class="fc" id="L361">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L362">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L364">            ps.setString(1, name);</span>
+<span class="fc" id="L365">            ps.setDate(2, date);</span>
+<span class="fc" id="L366">            ps.executeUpdate();</span>
+        }
+<span class="fc" id="L368">    }</span>
+
+    public String getEmployeeIdForLeave(int leaveId) throws Exception {
+<span class="fc" id="L371">        String sql = &quot;SELECT employee_id FROM leave_applications WHERE leave_application_id = ?&quot;;</span>
+<span class="fc" id="L372">        try (Connection con = DBConnection.getConnection();</span>
+<span class="fc" id="L373">                PreparedStatement ps = con.prepareStatement(sql)) {</span>
+<span class="fc" id="L374">            ps.setInt(1, leaveId);</span>
+<span class="fc" id="L375">            try (ResultSet rs = ps.executeQuery()) {</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">                if (rs.next()) {</span>
+<span class="fc" id="L377">                    return rs.getString(&quot;employee_id&quot;);</span>
+                }
+<span class="pc bpc" id="L379" title="1 of 2 branches missed.">            }</span>
+<span class="pc bpc" id="L380" title="2 of 4 branches missed.">        }</span>
+<span class="fc" id="L381">        return null;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PerformanceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">revworkforce</a> &gt; <a href="index.source.html" class="el_package">com.revworkforce.service</a> &gt; <span class="el_source">PerformanceService.java</span></div><h1>PerformanceService.java</h1><pre class="source lang-java linenums">/*
+ * Developed by Gururaj Shetty
+ */
+package com.revworkforce.service;
+
+import com.revworkforce.dao.PerformanceDAO;
+import com.revworkforce.util.InputUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.ResultSet;
+
+/**
+ * Service class for Performance Management.
+ * Handles performance reviews, goal setting, and feedback retrieval.
+ * 
+ * @author Gururaj Shetty
+ */
+<span class="nc" id="L19">public class PerformanceService {</span>
+
+<span class="fc" id="L21">    private static final Logger logger = LogManager.getLogger(PerformanceService.class);</span>
+
+<span class="fc" id="L23">    private static PerformanceDAO dao = new PerformanceDAO();</span>
+
+    /**
+     * Allows a manager to view performance reviews of their team.
+     * Can also process a specific review (Add Feedback/Rating).
+     * 
+     * @param managerId The Manager's Employee ID.
+     */
+    public static void reviewTeam(String managerId) {
+
+        try {
+<span class="fc" id="L34">            ResultSet rs = dao.getTeamReviews(managerId);</span>
+<span class="fc" id="L35">            System.out.println(&quot;\n--- TEAM PERFORMANCE ---&quot;);</span>
+
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L38">                System.out.println(</span>
+<span class="nc" id="L39">                        rs.getInt(&quot;review_id&quot;) +</span>
+<span class="nc" id="L40">                                &quot; | &quot; + rs.getString(&quot;employee_id&quot;) +</span>
+<span class="nc" id="L41">                                &quot; | Status: &quot; + rs.getString(&quot;status&quot;));</span>
+            }
+
+<span class="fc" id="L44">            int reviewId = InputUtil.readInt(&quot;Review ID to process: &quot;);</span>
+<span class="fc" id="L45">            String feedback = InputUtil.readString(&quot;Manager Feedback: &quot;);</span>
+<span class="fc" id="L46">            int rating = InputUtil.readInt(&quot;Rating (1–5): &quot;);</span>
+
+<span class="fc" id="L48">            dao.submitManagerFeedback(reviewId, feedback, rating);</span>
+
+<span class="fc" id="L50">            AuditService.log(</span>
+                    managerId,
+                    &quot;REVIEW&quot;,
+                    &quot;PERFORMANCE_REVIEWS&quot;,
+<span class="fc" id="L54">                    String.valueOf(reviewId),</span>
+                    &quot;Performance reviewed&quot;);
+
+<span class="fc" id="L57">            System.out.println(&quot;Performance reviewed successfully&quot;);</span>
+
+<span class="fc" id="L59">        } catch (Exception e) {</span>
+<span class="fc" id="L60">            logger.error(&quot;Performance review failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L61">        }</span>
+<span class="fc" id="L62">    }</span>
+
+    /**
+     * Allows an employee to submit their self-review.
+     * Captures key deliverables, accomplishments, and areas of improvement.
+     * 
+     * @param empId The Employee ID.
+     */
+    public static void submitSelfReview(String empId) {
+
+        try {
+<span class="fc" id="L73">            int cycleId = InputUtil.readInt(&quot;Performance Cycle ID: &quot;);</span>
+<span class="fc" id="L74">            String del = InputUtil.readString(&quot;Key Deliverables: &quot;);</span>
+<span class="fc" id="L75">            String acc = InputUtil.readString(&quot;Major Accomplishments: &quot;);</span>
+<span class="fc" id="L76">            String imp = InputUtil.readString(&quot;Areas of Improvement: &quot;);</span>
+<span class="fc" id="L77">            double rating = Double.parseDouble(</span>
+<span class="fc" id="L78">                    InputUtil.readString(&quot;Self Rating (1–5): &quot;));</span>
+
+<span class="fc" id="L80">            dao.submitSelfReview(empId, cycleId, del, acc, imp, rating);</span>
+
+<span class="fc" id="L82">            AuditService.log(</span>
+                    empId, &quot;SUBMIT&quot;,
+                    &quot;PERFORMANCE_REVIEWS&quot;,
+                    &quot;NEW&quot;,
+                    &quot;Self review submitted&quot;);
+
+<span class="fc" id="L88">            System.out.println(&quot;Performance review submitted&quot;);</span>
+
+<span class="fc" id="L90">        } catch (Exception e) {</span>
+<span class="fc" id="L91">            logger.error(&quot;Submission failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L92">        }</span>
+<span class="fc" id="L93">    }</span>
+
+    /**
+     * Allows an employee to view and manage their goals.
+     * Enables updating progress on assigned goals.
+     * 
+     * @param empId The Employee ID.
+     */
+    public static void manageGoals(String empId) {
+
+        try {
+<span class="fc" id="L104">            ResultSet rs = dao.getMyGoals(empId);</span>
+<span class="fc" id="L105">            System.out.println(&quot;\n--- MY GOALS ---&quot;);</span>
+
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L108">                System.out.println(</span>
+<span class="nc" id="L109">                        rs.getInt(&quot;goal_id&quot;) + &quot; | &quot; +</span>
+<span class="nc" id="L110">                                rs.getString(&quot;goal_description&quot;) +</span>
+                                &quot; | Progress: &quot; +
+<span class="nc" id="L112">                                rs.getInt(&quot;progress_percentage&quot;) + &quot;%&quot;);</span>
+            }
+
+<span class="fc" id="L115">            int goalId = InputUtil.readInt(&quot;Goal ID to update: &quot;);</span>
+<span class="fc" id="L116">            int progress = InputUtil.readInt(&quot;New progress %: &quot;);</span>
+
+<span class="fc" id="L118">            dao.updateGoalProgress(goalId, progress);</span>
+
+<span class="fc" id="L120">            AuditService.log(</span>
+                    empId, &quot;UPDATE&quot;,
+                    &quot;GOALS&quot;,
+<span class="fc" id="L123">                    String.valueOf(goalId),</span>
+                    &quot;Goal progress updated&quot;);
+
+<span class="fc" id="L126">            System.out.println(&quot;Goal updated&quot;);</span>
+
+<span class="fc" id="L128">        } catch (Exception e) {</span>
+<span class="fc" id="L129">            logger.error(&quot;Goal operation failed: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L130">        }</span>
+<span class="fc" id="L131">    }</span>
+
+    /**
+     * Displays feedback provided by the manager.
+     * 
+     * @param empId The Employee ID.
+     */
+    public static void viewManagerFeedback(String empId) {
+
+        try {
+<span class="fc" id="L141">            ResultSet rs = dao.getMyFeedback(empId);</span>
+
+<span class="fc" id="L143">            System.out.println(&quot;\n--- MANAGER FEEDBACK ---&quot;);</span>
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L145">                System.out.println(</span>
+<span class="nc" id="L146">                        &quot;Rating: &quot; + rs.getInt(&quot;manager_rating&quot;) +</span>
+<span class="nc" id="L147">                                &quot; | Feedback: &quot; + rs.getString(&quot;manager_feedback&quot;));</span>
+            }
+<span class="fc" id="L149">        } catch (Exception e) {</span>
+<span class="fc" id="L150">            logger.error(&quot;No feedback available: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L151">        }</span>
+<span class="fc" id="L152">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
