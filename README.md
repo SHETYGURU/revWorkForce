@@ -20,7 +20,7 @@
 
 RevWorkForce follows a layered architecture pattern to ensure separation of concerns, maintainability, and scalability.
 
-For a detailed breakdown of class roles, responsibilities, and interaction flows, please refer to the **[Detailed Architecture Documentation](detailed_architecture.md)** and **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+For a detailed breakdown of class roles, responsibilities, and interaction flows, please refer to the  **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ```mermaid
 graph TD
