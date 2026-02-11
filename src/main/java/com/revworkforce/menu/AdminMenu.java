@@ -55,45 +55,49 @@ public class AdminMenu {
             System.out.println("23. Logout");
             System.out.println("=================================");
 
-            int choice = InputUtil.readInt("Select Option: ");
+            try {
+                int choice = InputUtil.readInt("Select Option: ");
 
-            switch (choice) {
-                // Employee Management
-                case 1 -> AdminService.addEmployee();
-                case 2 -> AdminService.updateEmployee();
-                case 3 -> AdminService.viewAllEmployees();
-                case 4 -> AdminService.searchEmployees();
-                case 5 -> AdminService.assignManager();
-                case 6 -> AdminService.toggleEmployeeStatus();
-                case 7 -> AdminService.unlockEmployeeAccount();
-                case 8 -> AdminService.resetUserPassword();
+                switch (choice) {
+                    // Employee Management
+                    case 1 -> AdminService.addEmployee();
+                    case 2 -> AdminService.updateEmployee();
+                    case 3 -> AdminService.viewAllEmployees();
+                    case 4 -> AdminService.searchEmployees();
+                    case 5 -> AdminService.assignManager();
+                    case 6 -> AdminService.toggleEmployeeStatus();
+                    case 7 -> AdminService.unlockEmployeeAccount();
+                    case 8 -> AdminService.resetUserPassword();
 
-                // Leave Configuration
-                case 9 -> AdminService.configureLeaveTypes();
-                case 10 -> AdminService.assignLeaveQuotas();
-                case 11 -> AdminService.adjustLeaveBalance();
-                case 12 -> AdminService.revokeLeave();
-                case 13 -> AdminService.configureHolidays();
-                case 14 -> AdminService.leaveReports();
+                    // Leave Configuration
+                    case 9 -> AdminService.configureLeaveTypes();
+                    case 10 -> AdminService.assignLeaveQuotas();
+                    case 11 -> AdminService.adjustLeaveBalance();
+                    case 12 -> AdminService.revokeLeave();
+                    case 13 -> AdminService.configureHolidays();
+                    case 14 -> AdminService.leaveReports();
 
-                // System Configuration
-                case 15 -> AdminService.manageDepartments();
-                case 16 -> AdminService.manageDesignations();
-                case 17 -> AdminService.configurePerformanceCycles();
-                case 18 -> AdminService.manageSystemPolicies();
-                case 19 -> AdminService.viewAuditLogs();
+                    // System Configuration
+                    case 15 -> AdminService.manageDepartments();
+                    case 16 -> AdminService.manageDesignations();
+                    case 17 -> AdminService.configurePerformanceCycles();
+                    case 18 -> AdminService.manageSystemPolicies();
+                    case 19 -> AdminService.viewAuditLogs();
 
-                // Admin Actions
-                case 20 -> com.revworkforce.service.NotificationService.viewNotifications(admin.getEmployeeId());
-                case 21 -> com.revworkforce.service.NotificationService.generateDailyNotifications();
-                case 22 -> com.revworkforce.service.EmployeeService.changePassword(admin.getEmployeeId());
+                    // Admin Actions
+                    case 20 -> com.revworkforce.service.NotificationService.viewNotifications(admin.getEmployeeId());
+                    case 21 -> com.revworkforce.service.NotificationService.generateDailyNotifications();
+                    case 22 -> com.revworkforce.service.EmployeeService.changePassword(admin.getEmployeeId());
 
-                case 23 -> {
-                    System.out.println("Logging out...");
-                    SessionContext.clear();
-                    return;
+                    case 23 -> {
+                        System.out.println("Logging out...");
+                        SessionContext.clear();
+                        return;
+                    }
+                    default -> System.out.println("Invalid option. Please try again.");
                 }
-                default -> System.out.println("Invalid option. Please try again.");
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }

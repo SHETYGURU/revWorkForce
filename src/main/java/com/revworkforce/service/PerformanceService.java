@@ -75,7 +75,19 @@ public class PerformanceService {
             // UI Helper: Show list of active cycles (e.g., 2024 Q1) so user knows what ID
             // to enter
             cycleDAO.printActiveCycles();
+            java.util.List<Integer> activeIds = cycleDAO.getActiveCycleIds();
+
+            if (activeIds.isEmpty()) {
+                System.out.println("No active performance cycles available for submission.");
+                return;
+            }
+
             int cycleId = InputUtil.readInt("Performance Cycle ID: ");
+            if (!activeIds.contains(cycleId)) {
+                System.out.println("Error: Invalid Cycle ID. Please select from the list above.");
+                return;
+            }
+
             String del = InputUtil.readString("Key Deliverables: ");
             String acc = InputUtil.readString("Major Accomplishments: ");
             String imp = InputUtil.readString("Areas of Improvement: ");

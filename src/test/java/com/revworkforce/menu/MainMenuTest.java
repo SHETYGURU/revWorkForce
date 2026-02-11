@@ -54,18 +54,11 @@ class MainMenuTest {
 
     @Test
     void testLogin_Admin() {
-        // 1. Select Login
-        // 2. Enter Credentials
-        // 3. Login Success
-        // 4. Role DAO returns ADMIN
-        // 5. AdminMenu.start() called
-        // 6. Then throw RuntimeException to break the infinite loop in MainMenu
-
-        // Note: MainMenu has a while(true) loop. We need to break it.
-        // We can throw an exception from the last call we expect.
-
+        // 1. Select Login (1)
+        // 2. Loop cycles, prompts again -> Throw Error to break infinite loop
         mockInputUtil.when(() -> InputUtil.readInt(anyString()))
-                .thenReturn(1); // Select Login
+                .thenReturn(1)
+                .thenThrow(new Error("End Test"));
 
         mockInputUtil.when(() -> InputUtil.readString(contains("Employee ID")))
                 .thenReturn("ADMIN001");
@@ -80,22 +73,23 @@ class MainMenuTest {
         admin.setFirstName("Super");
         SessionContext.set(admin);
 
-        // Mock RoleDAO construction
+        // Mock RoleDAO
         try (MockedConstruction<RoleDAO> mockRoleDao = mockConstruction(RoleDAO.class,
                 (mock, context) -> {
                     when(mock.getEmployeeRole("ADMIN001")).thenReturn("ADMIN");
                 })) {
 
-            // Break loop by throwing exception from AdminMenu.start()
-            mockAdminMenu.when(AdminMenu::start).thenThrow(new RuntimeException("Stop Loop"));
+            // AdminMenu.start() called normally (returns void)
+            mockAdminMenu.when(AdminMenu::start).thenAnswer(invocation -> null);
 
             try {
                 MainMenu.start();
-            } catch (RuntimeException e) {
-                // Expected
-                assertEquals("Stop Loop", e.getMessage());
+            } catch (Error e) {
+                // Expected to break loop
+                assertEquals("End Test", e.getMessage());
             }
 
+            // Verify AdminMenu.start() was reached
             mockAdminMenu.verify(AdminMenu::start);
         }
     }

@@ -25,17 +25,22 @@ public class MainMenu {
             System.out.println("3.  Exit System");
             System.out.println("=================================");
 
-            int choice = InputUtil.readInt("Select Option: ");
+            try {
+                int choice = InputUtil.readInt("Select Option: ");
 
-            switch (choice) {
-                case 1 -> login();
-                case 2 -> AuthService.forgotPasswordFlow();
-                case 3 -> {
-                    System.out.println("Exiting system. Goodbye!");
-                    InputUtil.close();
-                    System.exit(0);
+                switch (choice) {
+                    case 1 -> login();
+                    case 2 -> AuthService.forgotPasswordFlow();
+                    case 3 -> {
+                        System.out.println("Exiting system. Goodbye!");
+                        InputUtil.close();
+                        System.exit(0);
+                    }
+                    default -> System.out.println("Invalid option. Please try again.");
                 }
-                default -> System.out.println("Invalid option. Please try again.");
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
+                // Continue loop
             }
         }
     }
@@ -69,7 +74,7 @@ public class MainMenu {
                     }
                 } catch (Exception e) {
                     if ("Stop Loop".equals(e.getMessage())) {
-                        throw (RuntimeException) e;
+                        return; // Handle "Stop Loop" as a signal to return/logout
                     }
                     System.out.println("Error fetching user role: " + e.getMessage());
                 }

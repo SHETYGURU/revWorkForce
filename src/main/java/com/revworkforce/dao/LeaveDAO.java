@@ -6,6 +6,10 @@ package com.revworkforce.dao;
 import com.revworkforce.util.DBConnection;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * DAO for Leave Management.
@@ -15,7 +19,7 @@ import java.sql.*;
  */
 public class LeaveDAO {
 
-    public ResultSet getLeaveBalances(String empId) throws Exception {
+    public List<Map<String, Object>> getLeaveBalances(String empId) throws Exception {
         String sql = """
                     SELECT lt.leave_type_name, lb.total_allocated,
                            lb.used_leaves, lb.available_leaves
@@ -24,20 +28,32 @@ public class LeaveDAO {
                     WHERE lb.employee_id = ?
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, empId);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, empId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("leave_type_name", rs.getString("leave_type_name"));
+                    row.put("total_allocated", rs.getInt("total_allocated"));
+                    row.put("used_leaves", rs.getInt("used_leaves"));
+                    row.put("available_leaves", rs.getInt("available_leaves"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
     /**
      * Retrieves pending leave requests for a manager's team.
      * 
      * @param managerId The Manager's Employee ID.
-     * @return ResultSet of pending leaves.
+     * @return List of pending leaves.
      * @throws Exception if query fails.
      */
-    public ResultSet getTeamLeaveRequests(String managerId) throws Exception {
+    public List<Map<String, Object>> getTeamLeaveRequests(String managerId) throws Exception {
 
         String sql = """
                     SELECT la.leave_application_id,
@@ -56,10 +72,26 @@ public class LeaveDAO {
                     ORDER BY la.applied_date
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, managerId);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, managerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("leave_application_id", rs.getInt("leave_application_id"));
+                    row.put("employee_id", rs.getString("employee_id"));
+                    row.put("first_name", rs.getString("first_name"));
+                    row.put("last_name", rs.getString("last_name"));
+                    row.put("department_name", rs.getString("department_name"));
+                    row.put("start_date", rs.getDate("start_date"));
+                    row.put("end_date", rs.getDate("end_date"));
+                    row.put("status", rs.getString("status"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
     /**
@@ -121,7 +153,7 @@ public class LeaveDAO {
         }
     }
 
-    public ResultSet getMyLeaves(String empId) throws Exception {
+    public List<Map<String, Object>> getMyLeaves(String empId) throws Exception {
         String sql = """
                     SELECT leave_application_id, start_date, end_date, status
                     FROM leave_applications
@@ -129,10 +161,22 @@ public class LeaveDAO {
                     ORDER BY applied_date DESC
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, empId);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, empId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("leave_application_id", rs.getInt("leave_application_id"));
+                    row.put("start_date", rs.getDate("start_date"));
+                    row.put("end_date", rs.getDate("end_date"));
+                    row.put("status", rs.getString("status"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
     public ResultSet getLeaveStatistics() throws Exception {
@@ -191,7 +235,7 @@ public class LeaveDAO {
         }
     }
 
-    public ResultSet getTeamLeaveCalendar(String managerId) throws Exception {
+    public List<Map<String, Object>> getTeamLeaveCalendar(String managerId) throws Exception {
 
         String sql = """
                     SELECT la.employee_id,
@@ -206,13 +250,25 @@ public class LeaveDAO {
                     ORDER BY la.start_date
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, managerId);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, managerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("employee_id", rs.getString("employee_id"));
+                    row.put("start_date", rs.getDate("start_date"));
+                    row.put("end_date", rs.getDate("end_date"));
+                    row.put("leave_type_name", rs.getString("leave_type_name"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
-    public ResultSet getApprovedLeavesForEmployee(String empId) throws Exception {
+    public List<Map<String, Object>> getApprovedLeavesForEmployee(String empId) throws Exception {
         String sql = """
                     SELECT la.employee_id,
                            la.start_date,
@@ -225,13 +281,25 @@ public class LeaveDAO {
                     ORDER BY la.start_date
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, empId);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, empId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("employee_id", rs.getString("employee_id"));
+                    row.put("start_date", rs.getDate("start_date"));
+                    row.put("end_date", rs.getDate("end_date"));
+                    row.put("leave_type_name", rs.getString("leave_type_name"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
-    public ResultSet getTeamLeaveBalances(String managerId) throws Exception {
+    public List<Map<String, Object>> getTeamLeaveBalances(String managerId) throws Exception {
 
         String sql = """
                     SELECT lb.employee_id,
@@ -246,10 +314,23 @@ public class LeaveDAO {
                     ORDER BY lb.employee_id, lt.leave_type_name
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, managerId);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, managerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("employee_id", rs.getString("employee_id"));
+                    row.put("leave_type_name", rs.getString("leave_type_name"));
+                    row.put("total_allocated", rs.getInt("total_allocated"));
+                    row.put("used_leaves", rs.getInt("used_leaves"));
+                    row.put("available_leaves", rs.getInt("available_leaves"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
     /**

@@ -305,7 +305,7 @@ INSERT INTO security_questions (question_text) VALUES ('What city were you born 
 
 -- 18. Employee Security --
 INSERT INTO employee_security (employee_id, question_id, answer_hash)
-SELECT employee_id, 1, 'hashed_answer' FROM employees; 
+SELECT employee_id, 1, '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy' FROM employees; 
 
 -- 19. Audit Logs --
 INSERT INTO audit_logs (employee_id, action, table_name, record_id, old_value, new_value, ip_address)

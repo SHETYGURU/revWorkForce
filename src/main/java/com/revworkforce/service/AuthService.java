@@ -34,25 +34,33 @@ public class AuthService {
      * @param password The raw password input.
      * @return true if login is successful, false otherwise.
      */
+    /**
+     * Authenticates a user based on Employee ID and Password.
+     * Checks for account locks and tracks failed attempts.
+     *
+     * @param empId    The Employee ID.
+     * @param password The raw password input.
+     * @return true if login is successful, false otherwise.
+     */
     public static boolean login(String empId, String password) {
 
         try {
-            ResultSet rs = dao.getAuthDetails(empId);
+            java.util.Map<String, Object> authDetails = dao.getAuthDetails(empId);
 
-            if (!rs.next()) {
+            if (authDetails == null) {
                 System.out.println("Invalid credentials");
                 logger.warn("Failed login attempt - User not found: {}", empId);
                 return false;
             }
 
-            if (rs.getInt("account_locked") == 1) {
+            if ((int) authDetails.get("account_locked") == 1) {
                 System.out.println("Account is locked. Please contact admin.");
                 logger.warn("Failed login attempt - Account Locked: {}", empId);
                 return false;
             }
 
-            String hash = rs.getString("password_hash");
-            int failedAttempts = rs.getInt("failed_login_attempts");
+            String hash = (String) authDetails.get("password_hash");
+            int failedAttempts = (int) authDetails.get("failed_login_attempts");
 
             // Verify Password
             if (!PasswordUtil.verifyPassword(password, hash)) {
@@ -114,9 +122,9 @@ public class AuthService {
     public static boolean changePassword(String empId, String oldPassword, String newPassword) {
         try {
             // 1. Verify Old Password
-            ResultSet rs = dao.getAuthDetails(empId);
-            if (rs.next()) {
-                String hash = rs.getString("password_hash");
+            java.util.Map<String, Object> authDetails = dao.getAuthDetails(empId);
+            if (authDetails != null) {
+                String hash = (String) authDetails.get("password_hash");
                 if (!PasswordUtil.verifyPassword(oldPassword, hash)) {
                     System.out.println("Incorrect current password.");
                     logger.warn("Password change failed - Incorrect old password: {}", empId);
@@ -149,10 +157,10 @@ public class AuthService {
             String empId = com.revworkforce.util.InputUtil.readString("Enter Employee ID: ");
 
             // Fetch Security Question
-            ResultSet rs = dao.getSecurityDetails(empId);
-            if (rs.next()) {
-                String question = rs.getString("question_text");
-                String storedAnswerHash = rs.getString("answer_hash");
+            java.util.Map<String, Object> secDetails = dao.getSecurityDetails(empId);
+            if (secDetails != null) {
+                String question = (String) secDetails.get("question_text");
+                String storedAnswerHash = (String) secDetails.get("answer_hash");
 
                 System.out.println("Security Question: " + question);
                 String answer = com.revworkforce.util.InputUtil.readString("Answer: ");

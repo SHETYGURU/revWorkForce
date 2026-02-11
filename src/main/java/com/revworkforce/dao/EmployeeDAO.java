@@ -11,6 +11,10 @@ import org.apache.logging.log4j.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Data Access Object for Employee-related database operations.
@@ -65,7 +69,7 @@ public class EmployeeDAO {
      * @return ResultSet containing reportee details.
      * @throws Exception if a database access error occurs.
      */
-    public ResultSet getReportees(String managerId) throws Exception {
+    public List<Map<String, Object>> getReportees(String managerId) throws Exception {
         String sql = """
                     SELECT e.employee_id, e.first_name, e.last_name, e.email,
                            d.department_name, des.designation_name
@@ -76,10 +80,24 @@ public class EmployeeDAO {
                       AND e.is_active = 1
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, managerId);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, managerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("employee_id", rs.getString("employee_id"));
+                    row.put("first_name", rs.getString("first_name"));
+                    row.put("last_name", rs.getString("last_name"));
+                    row.put("email", rs.getString("email"));
+                    row.put("department_name", rs.getString("department_name"));
+                    row.put("designation_name", rs.getString("designation_name"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
     public boolean isReportee(String managerId, String empId) throws Exception {
@@ -203,7 +221,7 @@ public class EmployeeDAO {
      * @return ResultSet containing matching employee records.
      * @throws Exception if query fails.
      */
-    public ResultSet searchEmployees(String keyword) throws Exception {
+    public List<Map<String, Object>> searchEmployees(String keyword) throws Exception {
         String sql = """
                     SELECT e.employee_id, e.first_name, e.last_name, e.email,
                            d.department_name, des.designation_name
@@ -219,16 +237,30 @@ public class EmployeeDAO {
                     ORDER BY e.employee_id
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        String searchPattern = "%" + keyword + "%";
-        ps.setString(1, searchPattern);
-        ps.setString(2, searchPattern);
-        ps.setString(3, searchPattern);
-        ps.setString(4, searchPattern);
-        ps.setString(5, searchPattern);
-        ps.setString(6, searchPattern);
-        return ps.executeQuery();
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            String searchPattern = "%" + keyword + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            ps.setString(3, searchPattern);
+            ps.setString(4, searchPattern);
+            ps.setString(5, searchPattern);
+            ps.setString(6, searchPattern);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("employee_id", rs.getString("employee_id"));
+                    row.put("first_name", rs.getString("first_name"));
+                    row.put("last_name", rs.getString("last_name"));
+                    row.put("email", rs.getString("email"));
+                    row.put("department_name", rs.getString("department_name"));
+                    row.put("designation_name", rs.getString("designation_name"));
+                    list.add(row);
+                }
+            }
+        }
+        return list;
     }
 
     public String getNextId(String prefix) throws Exception {
@@ -317,7 +349,7 @@ public class EmployeeDAO {
         }
     }
 
-    public ResultSet getAuthDetails(String empId) throws Exception {
+    public Map<String, Object> getAuthDetails(String empId) throws Exception {
         String sql = """
                     SELECT employee_id,
                            password_hash,
@@ -328,10 +360,21 @@ public class EmployeeDAO {
                       AND is_active = 1
                 """;
 
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, empId);
-        return ps.executeQuery();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, empId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Map<String, Object> details = new HashMap<>();
+                    details.put("employee_id", rs.getString("employee_id"));
+                    details.put("password_hash", rs.getString("password_hash"));
+                    details.put("failed_login_attempts", rs.getInt("failed_login_attempts"));
+                    details.put("account_locked", rs.getInt("account_locked"));
+                    return details;
+                }
+            }
+        }
+        return null; // Not found
     }
 
     public void recordSuccessfulLogin(String empId) throws Exception {
@@ -389,17 +432,26 @@ public class EmployeeDAO {
         }
     }
 
-    public ResultSet getSecurityDetails(String empId) throws Exception {
+    public Map<String, Object> getSecurityDetails(String empId) throws Exception {
         String sql = """
                     SELECT q.question_text, es.answer_hash
                     FROM employee_security es
                     JOIN security_questions q ON es.question_id = q.question_id
                     WHERE es.employee_id = ?
                 """;
-        Connection con = DBConnection.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, empId);
-        return ps.executeQuery();
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, empId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Map<String, Object> details = new HashMap<>();
+                    details.put("question_text", rs.getString("question_text"));
+                    details.put("answer_hash", rs.getString("answer_hash"));
+                    return details;
+                }
+            }
+        }
+        return null; // Not found
     }
 
     // Implemented Methods

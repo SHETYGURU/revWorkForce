@@ -32,19 +32,18 @@ public class LeaveService {
      */
     public static void viewLeaveBalance(String empId) {
         try {
-            ResultSet rs = dao.getLeaveBalances(empId);
+            java.util.List<java.util.Map<String, Object>> list = dao.getLeaveBalances(empId);
             System.out.println("\n--- LEAVE BALANCE ---");
-            boolean found = false;
-            while (rs.next()) {
-                found = true;
-                System.out.println(
-                        rs.getString("leave_type_name") +
-                                " | Total: " + rs.getInt("total_allocated") +
-                                " | Used: " + rs.getInt("used_leaves") +
-                                " | Available: " + rs.getInt("available_leaves"));
-            }
-            if (!found) {
+            if (list.isEmpty()) {
                 System.out.println("No leave balance records found.");
+            } else {
+                for (java.util.Map<String, Object> row : list) {
+                    System.out.println(
+                            row.get("leave_type_name") +
+                                    " | Total: " + row.get("total_allocated") +
+                                    " | Used: " + row.get("used_leaves") +
+                                    " | Available: " + row.get("available_leaves"));
+                }
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "leave balance: " + e.getMessage(), e);
@@ -99,19 +98,18 @@ public class LeaveService {
      */
     public static void viewMyLeaves(String empId) {
         try {
-            ResultSet rs = dao.getMyLeaves(empId);
+            java.util.List<java.util.Map<String, Object>> list = dao.getMyLeaves(empId);
             System.out.println("\n--- MY LEAVES ---");
-            boolean found = false;
-            while (rs.next()) {
-                found = true;
-                System.out.println(
-                        "ID: " + rs.getInt("leave_application_id") +
-                                " | " + rs.getDate("start_date") +
-                                " -> " + rs.getDate("end_date") +
-                                " | " + rs.getString("status"));
-            }
-            if (!found) {
+            if (list.isEmpty()) {
                 System.out.println("No leave applications found.");
+            } else {
+                for (java.util.Map<String, Object> row : list) {
+                    System.out.println(
+                            "ID: " + row.get("leave_application_id") +
+                                    " | " + row.get("start_date") +
+                                    " -> " + row.get("end_date") +
+                                    " | " + row.get("status"));
+                }
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "leaves: " + e.getMessage(), e);
@@ -144,8 +142,24 @@ public class LeaveService {
      */
     public static void viewHolidays() {
         System.out.println("\n--- HOLIDAY CALENDAR ---");
-        // Needs HolidayDAO implementation - simply print stub for now or SQL query
-        // Ideally: dao.getHolidays()
-        System.out.println("feature coming soon...");
+        try {
+            com.revworkforce.dao.HolidayDAO holidayDao = new com.revworkforce.dao.HolidayDAO();
+            java.sql.ResultSet rs = holidayDao.getHolidays(java.time.Year.now().getValue());
+
+            boolean found = false;
+            while (rs.next()) {
+                found = true;
+                System.out.printf("%-20s | %s%n",
+                        rs.getString("holiday_name"),
+                        rs.getDate("holiday_date"));
+            }
+
+            if (!found) {
+                System.out.println("No holidays found for this year.");
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching holidays: " + e.getMessage(), e);
+            System.out.println("Error fetching holidays.");
+        }
     }
 }

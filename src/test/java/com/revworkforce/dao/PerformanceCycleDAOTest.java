@@ -50,9 +50,9 @@ class PerformanceCycleDAOTest {
     void testCreateCycle() throws Exception {
         Date start = Date.valueOf("2024-01-01");
         Date end = Date.valueOf("2024-12-31");
-        cycleDAO.createCycle("2024 Review", start, end);
+        cycleDAO.createCycle(2024, start, end);
 
-        verify(mockPreparedStatement).setString(1, "2024 Review");
+        verify(mockPreparedStatement).setInt(1, 2024);
         verify(mockPreparedStatement).setDate(2, start);
         verify(mockPreparedStatement).setDate(3, end);
         verify(mockPreparedStatement).executeUpdate();

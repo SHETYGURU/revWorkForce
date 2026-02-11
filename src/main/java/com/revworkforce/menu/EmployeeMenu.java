@@ -56,38 +56,42 @@ public class EmployeeMenu {
             System.out.println("17. Logout");
             System.out.println("=================================");
 
-            int choice = InputUtil.readInt("Select Option: ");
+            try {
+                int choice = InputUtil.readInt("Select Option: ");
 
-            switch (choice) {
-                case 1 -> EmployeeService.viewProfile(emp.getEmployeeId());
-                case 2 -> EmployeeService.updateProfile(emp.getEmployeeId());
-                case 3 -> EmployeeService.viewManagerDetails(emp.getEmployeeId());
+                switch (choice) {
+                    case 1 -> EmployeeService.viewProfile(emp.getEmployeeId());
+                    case 2 -> EmployeeService.updateProfile(emp.getEmployeeId());
+                    case 3 -> EmployeeService.viewManagerDetails(emp.getEmployeeId());
 
-                case 4 -> LeaveService.viewLeaveBalance(emp.getEmployeeId());
-                case 5 -> LeaveService.applyLeave(emp.getEmployeeId());
-                case 6 -> LeaveService.viewMyLeaves(emp.getEmployeeId());
-                case 7 -> LeaveService.cancelLeave(emp.getEmployeeId());
-                case 8 -> LeaveService.viewHolidays();
+                    case 4 -> LeaveService.viewLeaveBalance(emp.getEmployeeId());
+                    case 5 -> LeaveService.applyLeave(emp.getEmployeeId());
+                    case 6 -> LeaveService.viewMyLeaves(emp.getEmployeeId());
+                    case 7 -> LeaveService.cancelLeave(emp.getEmployeeId());
+                    case 8 -> LeaveService.viewHolidays();
 
-                case 9 -> PerformanceService.submitSelfReview(emp.getEmployeeId());
-                case 10 -> PerformanceService.manageGoals(emp.getEmployeeId());
-                case 11 -> PerformanceService.viewManagerFeedback(emp.getEmployeeId());
+                    case 9 -> PerformanceService.submitSelfReview(emp.getEmployeeId());
+                    case 10 -> PerformanceService.manageGoals(emp.getEmployeeId());
+                    case 11 -> PerformanceService.viewManagerFeedback(emp.getEmployeeId());
 
-                case 12 -> {
-                    EmployeeService.viewUpcomingBirthdays();
-                    EmployeeService.viewWorkAnniversaries();
+                    case 12 -> {
+                        EmployeeService.viewUpcomingBirthdays();
+                        EmployeeService.viewWorkAnniversaries();
+                    }
+                    case 13 -> EmployeeService.viewAnnouncements();
+                    case 14 -> EmployeeService.employeeDirectory();
+                    case 15 -> NotificationService.viewNotifications(emp.getEmployeeId());
+                    case 16 -> EmployeeService.changePassword(emp.getEmployeeId());
+
+                    case 17 -> {
+                        System.out.println("Logging out...");
+                        SessionContext.clear();
+                        return;
+                    }
+                    default -> System.out.println("Invalid option. Please try again.");
                 }
-                case 13 -> EmployeeService.viewAnnouncements();
-                case 14 -> EmployeeService.employeeDirectory();
-                case 15 -> NotificationService.viewNotifications(emp.getEmployeeId());
-                case 16 -> EmployeeService.changePassword(emp.getEmployeeId());
-
-                case 17 -> {
-                    System.out.println("Logging out...");
-                    SessionContext.clear();
-                    return;
-                }
-                default -> System.out.println("Invalid option. Please try again.");
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }

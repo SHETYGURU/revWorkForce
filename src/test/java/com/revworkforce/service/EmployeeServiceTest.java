@@ -136,9 +136,9 @@ class EmployeeServiceTest {
 
     @Test
     void testEmployeeDirectory() throws Exception {
-        mockInputUtil.when(() -> InputUtil.readString(contains("Search"))).thenReturn("John");
-        ResultSet rs = mock(ResultSet.class);
-        when(mockEmpDao.searchEmployees("John")).thenReturn(rs);
+        mockInputUtil.when(() -> InputUtil.readString(contains("search"))).thenReturn("John");
+        java.util.List<java.util.Map<String, Object>> mockList = new java.util.ArrayList<>();
+        when(mockEmpDao.searchEmployees("John")).thenReturn(mockList);
 
         EmployeeService.employeeDirectory();
 

@@ -2,7 +2,8 @@ package com.revworkforce;
 
 import com.revworkforce.dao.EmployeeDAO;
 import com.revworkforce.service.ManagerService;
-import java.sql.ResultSet;
+import java.util.List;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,12 +20,13 @@ public class VerifyTeamDisplay {
             EmployeeDAO empDAO = new EmployeeDAO();
             // Search for John Doe to get ID
             logger.info("Searching for Manager 'John Doe'...");
-            ResultSet rs = empDAO.searchEmployees("John");
+            List<Map<String, Object>> list = empDAO.searchEmployees("John");
             String managerId = null;
-            while (rs.next()) {
-                if (rs.getString("first_name").equalsIgnoreCase("John")
-                        && rs.getString("last_name").equalsIgnoreCase("Doe")) {
-                    managerId = rs.getString("employee_id");
+            for (Map<String, Object> row : list) {
+                String firstName = (String) row.get("first_name");
+                String lastName = (String) row.get("last_name");
+                if (firstName.equalsIgnoreCase("John") && lastName.equalsIgnoreCase("Doe")) {
+                    managerId = (String) row.get("employee_id");
                     logger.info("Found Manager: " + managerId);
                     break;
                 }

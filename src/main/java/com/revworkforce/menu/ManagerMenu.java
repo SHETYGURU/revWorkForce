@@ -52,111 +52,125 @@ public class ManagerMenu {
             System.out.println("14. Logout");
             System.out.println("=================================");
 
-            int choice = InputUtil.readInt("Select Option: ");
+            try {
+                int choice = InputUtil.readInt("Select Option: ");
 
-            switch (choice) {
-                case 1 -> ManagerService.viewTeam(mgr.getEmployeeId());
-                case 2 -> {
-                    ManagerService.viewTeamBasic(mgr.getEmployeeId());
-                    while (true) {
-                        String empId = InputUtil.readString("Enter Employee ID: ");
-                        if (ManagerService.isTeamMember(mgr.getEmployeeId(), empId)) {
-                            ManagerService.viewTeamMemberProfile(empId);
-                            break;
-                        } else {
-                            System.out.println("Invalid Employee ID. Please select from the list above.");
+                switch (choice) {
+                    case 1 -> ManagerService.viewTeam(mgr.getEmployeeId());
+                    case 2 -> {
+                        ManagerService.viewTeamBasic(mgr.getEmployeeId());
+                        while (true) {
+                            String empId = InputUtil.readString("Enter Employee ID: ");
+                            if (ManagerService.isTeamMember(mgr.getEmployeeId(), empId)) {
+                                ManagerService.viewTeamMemberProfile(empId);
+                                break;
+                            } else {
+                                System.out.println("Invalid Employee ID. Please select from the list above.");
+                            }
                         }
                     }
-                }
 
-                case 3 -> {
-                    while (true) {
-                        ManagerService.viewTeamLeaveRequests(mgr.getEmployeeId());
-                        System.out.println("Enter Leave ID to Process (or 0 to Go Back)");
-
-                        int leaveId = 0;
+                    case 3 -> {
                         while (true) {
-                            leaveId = InputUtil.readInt("Leave ID: ");
+                            ManagerService.viewTeamLeaveRequests(mgr.getEmployeeId());
+                            System.out.println("Enter Leave ID to Process (or 0 to Go Back)");
+
+                            int leaveId = 0;
+                            while (true) {
+                                leaveId = InputUtil.readInt("Leave ID: ");
+                                if (leaveId == 0)
+                                    break;
+                                if (ManagerService.isPendingLeave(mgr.getEmployeeId(), leaveId)) {
+                                    break;
+                                } else {
+                                    System.out.println("Invalid Leave ID. Please select a valid ID from the list.");
+                                }
+                            }
+
                             if (leaveId == 0)
                                 break;
-                            if (ManagerService.isPendingLeave(mgr.getEmployeeId(), leaveId)) {
-                                break;
-                            } else {
-                                System.out.println("Invalid Leave ID. Please select a valid ID from the list.");
+
+                            String decision = "";
+                            while (true) {
+                                decision = InputUtil.readString("Decision (A=Approve / R=Reject / 0=Cancel): ");
+                                if (decision.equals("0") || decision.equalsIgnoreCase("C")) {
+                                    decision = "CANCEL";
+                                    break;
+                                }
+                                if (decision.equalsIgnoreCase("A") || decision.equalsIgnoreCase("R")) {
+                                    break;
+                                } else {
+                                    System.out.println(
+                                            "Invalid input. Please enter 'A' for Approve, 'R' for Reject, or '0' to Cancel.");
+                                }
                             }
+
+                            if (decision.equals("CANCEL")) {
+                                System.out.println("Operation cancelled.");
+                                continue;
+                            }
+
+                            String comments = InputUtil.readString("Reason/Comments: ");
+                            String status = decision.equalsIgnoreCase("A") ? "APPROVED" : "REJECTED";
+                            ManagerService.processLeave(mgr.getEmployeeId(), leaveId, status, comments);
                         }
+                    }
 
-                        if (leaveId == 0)
-                            break;
+                    case 4 -> {
+                        ManagerService.viewTeamLeaveCalendar(mgr.getEmployeeId()); // Show calendar to help identify
+                        System.out.println("Enter Leave ID to Revoke (or 0 to Cancel):");
+                        int leaveId = InputUtil.readInt("Leave ID: ");
+                        if (leaveId != 0) {
+                            String reason = InputUtil.readString("Reason for Revocation: ");
+                            ManagerService.revokeApprovedLeave(mgr.getEmployeeId(), leaveId, reason);
+                        }
+                    }
 
-                        String decision = "";
+                    case 5 -> ManagerService.viewTeamLeaveBalances(mgr.getEmployeeId());
+                    case 6 -> {
+                        ManagerService.viewTeamLeaveCalendar(mgr.getEmployeeId());
+                        System.out.println("Enter Employee ID to filter (or 0 to Back)");
                         while (true) {
-                            decision = InputUtil.readString("Decision (A=Approve / R=Reject): ");
-                            if (decision.equalsIgnoreCase("A") || decision.equalsIgnoreCase("R")) {
+                            String filterId = InputUtil.readString("Employee ID: ");
+                            if (filterId.equals("0"))
                                 break;
+
+                            if (ManagerService.isTeamMember(mgr.getEmployeeId(), filterId)) {
+                                ManagerService.viewEmployeeLeaveCalendar(filterId);
                             } else {
-                                System.out.println("Invalid input. Please enter 'A' for Approve or 'R' for Reject.");
+                                System.out.println("Invalid Employee ID. Please select a valid team member.");
                             }
                         }
-
-                        String comments = InputUtil.readString("Reason/Comments: ");
-                        String status = decision.equalsIgnoreCase("A") ? "APPROVED" : "REJECTED";
-                        ManagerService.processLeave(mgr.getEmployeeId(), leaveId, status, comments);
                     }
-                }
 
-                case 4 -> {
-                    ManagerService.viewTeamLeaveCalendar(mgr.getEmployeeId()); // Show calendar to help identify
-                    System.out.println("Enter Leave ID to Revoke (or 0 to Cancel):");
-                    int leaveId = InputUtil.readInt("Leave ID: ");
-                    if (leaveId != 0) {
-                        String reason = InputUtil.readString("Reason for Revocation: ");
-                        ManagerService.revokeApprovedLeave(mgr.getEmployeeId(), leaveId, reason);
-                    }
-                }
+                    case 7 -> ManagerService.viewTeamAttendance(mgr.getEmployeeId());
+                    case 8 -> ManagerService.viewTeamGoals(mgr.getEmployeeId());
+                    case 9 -> ManagerService.viewGoalCompletionSummary(mgr.getEmployeeId());
 
-                case 5 -> ManagerService.viewTeamLeaveBalances(mgr.getEmployeeId());
-                case 6 -> {
-                    ManagerService.viewTeamLeaveCalendar(mgr.getEmployeeId());
-                    System.out.println("Enter Employee ID to filter (or 0 to Back)");
-                    while (true) {
-                        String filterId = InputUtil.readString("Employee ID: ");
-                        if (filterId.equals("0"))
-                            break;
-
-                        if (ManagerService.isTeamMember(mgr.getEmployeeId(), filterId)) {
-                            ManagerService.viewEmployeeLeaveCalendar(filterId);
-                        } else {
-                            System.out.println("Invalid Employee ID. Please select a valid team member.");
+                    case 10 -> {
+                        ManagerService.viewTeamPerformance(mgr.getEmployeeId());
+                        System.out.println("\n(Enter 0 to Go Back)");
+                        int revId = InputUtil.readInt("Enter Review ID to Submit Feedback: ");
+                        if (revId != 0) {
+                            String feedback = InputUtil.readString("Feedback: ");
+                            int rating = InputUtil.readInt("Rating (1-5): ");
+                            ManagerService.submitPerformanceReview(mgr.getEmployeeId(), revId, feedback, rating);
                         }
                     }
-                }
+                    case 11 -> ReportService.teamPerformanceSummary(mgr.getEmployeeId());
 
-                case 7 -> ManagerService.viewTeamAttendance(mgr.getEmployeeId());
-                case 8 -> ManagerService.viewTeamGoals(mgr.getEmployeeId());
-                case 9 -> ManagerService.viewGoalCompletionSummary(mgr.getEmployeeId());
+                    case 12 -> com.revworkforce.service.NotificationService.viewNotifications(mgr.getEmployeeId());
+                    case 13 -> com.revworkforce.service.EmployeeService.changePassword(mgr.getEmployeeId());
 
-                case 10 -> {
-                    ManagerService.viewTeamPerformance(mgr.getEmployeeId());
-                    System.out.println("\n(Enter 0 to Go Back)");
-                    int revId = InputUtil.readInt("Enter Review ID to Submit Feedback: ");
-                    if (revId != 0) {
-                        String feedback = InputUtil.readString("Feedback: ");
-                        int rating = InputUtil.readInt("Rating (1-5): ");
-                        ManagerService.submitPerformanceReview(mgr.getEmployeeId(), revId, feedback, rating);
+                    case 14 -> {
+                        System.out.println("Logging out...");
+                        SessionContext.clear();
+                        return;
                     }
+                    default -> System.out.println("Invalid option. Please try again.");
                 }
-                case 11 -> ReportService.teamPerformanceSummary(mgr.getEmployeeId());
-
-                case 12 -> com.revworkforce.service.NotificationService.viewNotifications(mgr.getEmployeeId());
-                case 13 -> com.revworkforce.service.EmployeeService.changePassword(mgr.getEmployeeId());
-
-                case 14 -> {
-                    System.out.println("Logging out...");
-                    SessionContext.clear();
-                    return;
-                }
-                default -> System.out.println("Invalid option. Please try again.");
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }

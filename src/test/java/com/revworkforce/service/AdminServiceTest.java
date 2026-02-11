@@ -243,9 +243,9 @@ class AdminServiceTest {
 
         @Test
         void testSearchEmployees() throws Exception {
-                mockInputUtil.when(() -> InputUtil.readString(contains("Search"))).thenReturn("John");
-                java.sql.ResultSet mockRS = mock(java.sql.ResultSet.class);
-                when(mockEmpDao.searchEmployees("John")).thenReturn(mockRS);
+                mockInputUtil.when(() -> InputUtil.readString(contains("search"))).thenReturn("John");
+                java.util.List<java.util.Map<String, Object>> mockList = new java.util.ArrayList<>();
+                when(mockEmpDao.searchEmployees("John")).thenReturn(mockList);
 
                 AdminService.searchEmployees();
 

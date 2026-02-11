@@ -1,6 +1,7 @@
 package com.revworkforce.service;
 
 import com.revworkforce.dao.PerformanceDAO;
+import com.revworkforce.dao.PerformanceCycleDAO;
 import com.revworkforce.util.InputUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.util.Arrays;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
@@ -23,6 +25,8 @@ class PerformanceServiceTest {
     private PerformanceDAO mockDao;
     @Mock
     private ResultSet mockResultSet;
+    @Mock
+    private PerformanceCycleDAO mockCycleDao;
 
     private MockedStatic<InputUtil> mockedInputUtil;
     private MockedStatic<AuditService> mockedAuditService;
@@ -33,6 +37,7 @@ class PerformanceServiceTest {
 
         // Inject the mock DAO into the static field of PerformanceService
         setStaticField(PerformanceService.class, "dao", mockDao);
+        setStaticField(PerformanceService.class, "cycleDAO", mockCycleDao);
         // Also need to inject the cycleDAO mock if we were testing the
         // printActiveCycles interaction,
         // but for now we focus on the main dao. Note: Ideally process-related DAOs
@@ -93,6 +98,9 @@ class PerformanceServiceTest {
      */
     @Test
     void testSubmitSelfReview() throws Exception {
+        // Validation mocks
+        when(mockCycleDao.getActiveCycleIds()).thenReturn(Arrays.asList(2024));
+
         // Mock User Inputs for the review form
         mockedInputUtil.when(() -> InputUtil.readInt(contains("Cycle"))).thenReturn(2024);
         mockedInputUtil.when(() -> InputUtil.readString(contains("Deliverables"))).thenReturn("A");
@@ -149,6 +157,8 @@ class PerformanceServiceTest {
 
     @Test
     void testSubmitSelfReview_Failure() throws Exception {
+        when(mockCycleDao.getActiveCycleIds()).thenReturn(Arrays.asList(2024));
+
         mockedInputUtil.when(() -> InputUtil.readInt(contains("Cycle"))).thenReturn(2024);
         mockedInputUtil.when(() -> InputUtil.readString(contains("Deliverables"))).thenReturn("A");
         mockedInputUtil.when(() -> InputUtil.readString(contains("Accomplishments"))).thenReturn("B");
@@ -165,6 +175,8 @@ class PerformanceServiceTest {
 
     @Test
     void testSubmitSelfReview_InvalidRating() throws Exception {
+        when(mockCycleDao.getActiveCycleIds()).thenReturn(Arrays.asList(2024));
+
         mockedInputUtil.when(() -> InputUtil.readInt(contains("Cycle"))).thenReturn(2024);
         mockedInputUtil.when(() -> InputUtil.readString(contains("Deliverables"))).thenReturn("A");
         mockedInputUtil.when(() -> InputUtil.readString(contains("Accomplishments"))).thenReturn("B");

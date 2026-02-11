@@ -7,7 +7,6 @@ import com.revworkforce.dao.AttendanceDAO;
 import com.revworkforce.dao.EmployeeDAO;
 import com.revworkforce.dao.LeaveDAO;
 import com.revworkforce.dao.PerformanceDAO;
-import com.revworkforce.util.InputUtil;
 import com.revworkforce.util.MessageConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,17 +44,17 @@ public class ManagerService {
      */
     public static void viewTeam(String managerId) {
         try {
-            ResultSet rs = employeeDAO.getReportees(managerId);
+            java.util.List<java.util.Map<String, Object>> list = employeeDAO.getReportees(managerId);
             System.out.println("\n--- MY TEAM ---");
 
-            while (rs.next()) {
+            for (java.util.Map<String, Object> row : list) {
                 System.out.println(
-                        rs.getString("employee_id") + " | " +
-                                rs.getString("first_name") + " "
-                                + (rs.getString("last_name") != null ? rs.getString("last_name") : "") + " | " +
-                                rs.getString("designation_name") + " | " +
-                                rs.getString("department_name") + " | " +
-                                rs.getString("email"));
+                        row.get("employee_id") + " | " +
+                                row.get("first_name") + " "
+                                + (row.get("last_name") != null ? row.get("last_name") : "") + " | " +
+                                row.get("designation_name") + " | " +
+                                row.get("department_name") + " | " +
+                                row.get("email"));
             }
         } catch (Exception e) {
             logger.error("Failed to fetch team: " + e.getMessage(), e);
@@ -80,15 +79,15 @@ public class ManagerService {
      */
     public static void viewTeamBasic(String managerId) {
         try {
-            ResultSet rs = employeeDAO.getReportees(managerId);
+            java.util.List<java.util.Map<String, Object>> list = employeeDAO.getReportees(managerId);
             System.out.println("\n--- TEAM MEMBERS ---");
             System.out.printf("%-10s | %-20s%n", "ID", "Name");
             System.out.println("---------------------------------");
 
-            while (rs.next()) {
-                String name = rs.getString("first_name") + " " +
-                        (rs.getString("last_name") != null ? rs.getString("last_name") : "");
-                System.out.printf("%-10s | %-20s%n", rs.getString("employee_id"), name);
+            for (java.util.Map<String, Object> row : list) {
+                String name = row.get("first_name") + " " +
+                        (row.get("last_name") != null ? row.get("last_name") : "");
+                System.out.printf("%-10s | %-20s%n", row.get("employee_id"), name);
             }
         } catch (Exception e) {
             logger.error("Failed to fetch team: " + e.getMessage(), e);
@@ -128,24 +127,24 @@ public class ManagerService {
      */
     public static void viewTeamLeaveRequests(String managerId) {
         try {
-            ResultSet rs = leaveDAO.getTeamLeaveRequests(managerId);
+            java.util.List<java.util.Map<String, Object>> list = leaveDAO.getTeamLeaveRequests(managerId);
             System.out.println("\n--- TEAM LEAVE REQUESTS ---");
 
-            boolean found = false;
-            while (rs.next()) {
-                found = true;
-                String name = rs.getString("first_name") + " "
-                        + (rs.getString("last_name") != null ? rs.getString("last_name") : "");
-                String dept = rs.getString("department_name") != null ? rs.getString("department_name") : "N/A";
-
-                System.out.println(
-                        "ID: " + rs.getInt("leave_application_id") + " | " +
-                                "Emp: " + rs.getString("employee_id") + " (" + name + ", " + dept + ") | " +
-                                rs.getDate("start_date") + " -> " +
-                                rs.getDate("end_date") + " | Status: " + rs.getString("status"));
-            }
-            if (!found)
+            if (list.isEmpty()) {
                 System.out.println("No pending requests.");
+            } else {
+                for (java.util.Map<String, Object> row : list) {
+                    String name = row.get("first_name") + " "
+                            + (row.get("last_name") != null ? row.get("last_name") : "");
+                    String dept = row.get("department_name") != null ? (String) row.get("department_name") : "N/A";
+
+                    System.out.println(
+                            "ID: " + row.get("leave_application_id") + " | " +
+                                    "Emp: " + row.get("employee_id") + " (" + name + ", " + dept + ") | " +
+                                    row.get("start_date") + " -> " +
+                                    row.get("end_date") + " | Status: " + row.get("status"));
+                }
+            }
 
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "leave requests: " + e.getMessage(), e);
@@ -163,9 +162,9 @@ public class ManagerService {
      */
     public static boolean isPendingLeave(String managerId, int leaveId) {
         try {
-            ResultSet rs = leaveDAO.getTeamLeaveRequests(managerId);
-            while (rs.next()) {
-                if (rs.getInt("leave_application_id") == leaveId) {
+            java.util.List<java.util.Map<String, Object>> list = leaveDAO.getTeamLeaveRequests(managerId);
+            for (java.util.Map<String, Object> row : list) {
+                if ((int) row.get("leave_application_id") == leaveId) {
                     return true;
                 }
             }
@@ -215,15 +214,15 @@ public class ManagerService {
 
     public static void viewTeamLeaveCalendar(String managerId) {
         try {
-            ResultSet rs = leaveDAO.getTeamLeaveCalendar(managerId);
+            java.util.List<java.util.Map<String, Object>> list = leaveDAO.getTeamLeaveCalendar(managerId);
 
             System.out.println("\n--- TEAM LEAVE CALENDAR ---");
-            while (rs.next()) {
+            for (java.util.Map<String, Object> row : list) {
                 System.out.println(
-                        rs.getString("employee_id") +
-                                " | " + rs.getString("leave_type_name") +
-                                " | " + rs.getDate("start_date") +
-                                " -> " + rs.getDate("end_date"));
+                        row.get("employee_id") +
+                                " | " + row.get("leave_type_name") +
+                                " | " + row.get("start_date") +
+                                " -> " + row.get("end_date"));
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "team leave calendar: " + e.getMessage(), e);
@@ -265,14 +264,14 @@ public class ManagerService {
 
     public static void viewEmployeeLeaveCalendar(String empId) {
         try {
-            ResultSet rs = leaveDAO.getApprovedLeavesForEmployee(empId);
+            java.util.List<java.util.Map<String, Object>> list = leaveDAO.getApprovedLeavesForEmployee(empId);
 
             System.out.println("\n--- LEAVE CALENDAR: " + empId + " ---");
-            while (rs.next()) {
+            for (java.util.Map<String, Object> row : list) {
                 System.out.println(
-                        rs.getString("leave_type_name") + " | " +
-                                rs.getDate("start_date") + " -> " +
-                                rs.getDate("end_date"));
+                        row.get("leave_type_name") + " | " +
+                                row.get("start_date") + " -> " +
+                                row.get("end_date"));
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "employee leave calendar: " + e.getMessage(), e);
@@ -282,16 +281,16 @@ public class ManagerService {
 
     public static void viewTeamLeaveBalances(String managerId) {
         try {
-            ResultSet rs = leaveDAO.getTeamLeaveBalances(managerId);
+            java.util.List<java.util.Map<String, Object>> list = leaveDAO.getTeamLeaveBalances(managerId);
 
             System.out.println("\n--- TEAM LEAVE BALANCES ---");
-            while (rs.next()) {
+            for (java.util.Map<String, Object> row : list) {
                 System.out.println(
-                        rs.getString("employee_id") +
-                                " | " + rs.getString("leave_type_name") +
-                                " | Total: " + rs.getInt("total_allocated") +
-                                " | Used: " + rs.getInt("used_leaves") +
-                                " | Available: " + rs.getInt("available_leaves"));
+                        row.get("employee_id") +
+                                " | " + row.get("leave_type_name") +
+                                " | Total: " + row.get("total_allocated") +
+                                " | Used: " + row.get("used_leaves") +
+                                " | Available: " + row.get("available_leaves"));
             }
         } catch (Exception e) {
             logger.error(MessageConstants.UNABLE_TO_FETCH_PREFIX + "team leave balances: " + e.getMessage(), e);

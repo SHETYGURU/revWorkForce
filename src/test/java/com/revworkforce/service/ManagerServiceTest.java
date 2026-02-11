@@ -10,6 +10,10 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,11 +54,13 @@ class ManagerServiceTest {
 
     @Test
     void testViewTeam_Success() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockEmpDao.getReportees("MGR001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true, false); // One record then end
-        when(mockRs.getString("employee_id")).thenReturn("EMP001");
-        when(mockRs.getString("first_name")).thenReturn("Alice");
+        List<Map<String, Object>> mockList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        row.put("employee_id", "EMP001");
+        row.put("first_name", "Alice");
+        mockList.add(row);
+
+        when(mockEmpDao.getReportees("MGR001")).thenReturn(mockList);
 
         ManagerService.viewTeam("MGR001");
 
@@ -79,36 +85,7 @@ class ManagerServiceTest {
 
     @Test
     void testProcessLeave_Approve() throws Exception {
-        // Mock notification service static call?
-        // NotificationService.notifyLeaveUpdate is static. Accessing it might trigger
-        // side effects or errors if dependencies missing.
-        // Ideally we should mock NotificationService too if possible, but it's not a
-        // field in ManagerService.
-        // It resides in ManagerService method as
-        // `com.revworkforce.service.NotificationService.notifyLeaveUpdate`.
-        // We might need to mockStatic NotificationService if we want to be safe, or
-        // assume it's safe if it just does DB calls we can't easily mock w/o more
-        // injection.
-        // However, looking at ManagerService.java, it calls
-        // `leaveDAO.getEmployeeIdForLeave`.
-
         when(mockLeaveDao.getEmployeeIdForLeave(100)).thenReturn("EMP001");
-
-        // AuditService.log() is also static. static mocks are tricky if multiple per
-        // test.
-        // Let's rely on standard execution. If those services crash because of DB, we
-        // might need to mock them.
-        // But AuditService likely uses AuditLogDAO. If AuditLogDAO is not injected, it
-        // might be hard.
-        // Let's try running it. If it fails, I'll add MockedStatic for AuditService and
-        // NotificationService.
-
-        // For now, I'll just skip detailed static mocking of helpers to keep it simple,
-        // assuming they are robust enough or I'll catch the error.
-        // ACTUALLY, to be safe, I should probably try to mock AuditService and
-        // NotificationService if I want pure unit test.
-
-        // Let's just mock what we can easily control first.
 
         ManagerService.processLeave("MGR001", 100, "APPROVED", "Good to go");
 
@@ -117,15 +94,17 @@ class ManagerServiceTest {
 
     @Test
     void testViewTeamLeaveRequests() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockLeaveDao.getTeamLeaveRequests("MGR001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true, false);
-        when(mockRs.getInt("leave_application_id")).thenReturn(101);
-        when(mockRs.getString("employee_id")).thenReturn("EMP002");
-        when(mockRs.getString("first_name")).thenReturn("Bob");
-        when(mockRs.getDate("start_date")).thenReturn(java.sql.Date.valueOf("2024-01-01"));
-        when(mockRs.getDate("end_date")).thenReturn(java.sql.Date.valueOf("2024-01-02"));
-        when(mockRs.getString("status")).thenReturn("PENDING");
+        List<Map<String, Object>> mockList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        row.put("leave_application_id", 101);
+        row.put("employee_id", "EMP002");
+        row.put("first_name", "Bob");
+        row.put("start_date", java.sql.Date.valueOf("2024-01-01"));
+        row.put("end_date", java.sql.Date.valueOf("2024-01-02"));
+        row.put("status", "PENDING");
+        mockList.add(row);
+
+        when(mockLeaveDao.getTeamLeaveRequests("MGR001")).thenReturn(mockList);
 
         ManagerService.viewTeamLeaveRequests("MGR001");
 
@@ -141,8 +120,6 @@ class ManagerServiceTest {
         ManagerService.submitPerformanceReview("MGR001", 50, "Great Job", 5);
 
         verify(mockPerformanceDao).submitManagerFeedback(50, "Great Job", 5);
-        // We implicitly verified NotificationService didn't crash because we mocked its
-        // DAO
     }
 
     @Test
@@ -176,11 +153,14 @@ class ManagerServiceTest {
 
     @Test
     void testViewTeamBasic() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockEmpDao.getReportees("MGR001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true, false);
-        when(mockRs.getString("employee_id")).thenReturn("EMP001");
-        when(mockRs.getString("first_name")).thenReturn("Bob");
+        List<Map<String, Object>> mockList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        row.put("employee_id", "EMP001");
+        row.put("first_name", "Bob");
+        row.put("designation_name", "Dev"); // Added as likely used
+        mockList.add(row);
+
+        when(mockEmpDao.getReportees("MGR001")).thenReturn(mockList);
 
         ManagerService.viewTeamBasic("MGR001");
 
@@ -233,9 +213,12 @@ class ManagerServiceTest {
 
     @Test
     void testViewTeamLeaveCalendar() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockLeaveDao.getTeamLeaveCalendar("MGR001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true, false);
+        List<Map<String, Object>> mockList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        // Add minimal fields if needed, or empty list is fine for void test
+        mockList.add(row);
+
+        when(mockLeaveDao.getTeamLeaveCalendar("MGR001")).thenReturn(mockList);
 
         ManagerService.viewTeamLeaveCalendar("MGR001");
 
@@ -244,9 +227,11 @@ class ManagerServiceTest {
 
     @Test
     void testViewTeamLeaveBalances() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockLeaveDao.getTeamLeaveBalances("MGR001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true, false);
+        List<Map<String, Object>> mockList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        mockList.add(row);
+
+        when(mockLeaveDao.getTeamLeaveBalances("MGR001")).thenReturn(mockList);
 
         ManagerService.viewTeamLeaveBalances("MGR001");
 
@@ -255,9 +240,11 @@ class ManagerServiceTest {
 
     @Test
     void testViewEmployeeLeaveCalendar() throws Exception {
-        ResultSet mockRs = Mockito.mock(ResultSet.class);
-        when(mockLeaveDao.getApprovedLeavesForEmployee("EMP001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true, false);
+        List<Map<String, Object>> mockList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        mockList.add(row);
+
+        when(mockLeaveDao.getApprovedLeavesForEmployee("EMP001")).thenReturn(mockList);
 
         ManagerService.viewEmployeeLeaveCalendar("EMP001");
 
@@ -266,10 +253,12 @@ class ManagerServiceTest {
 
     @Test
     void testIsPendingLeave_NotPending() throws Exception {
-        ResultSet mockRs = mock(ResultSet.class);
-        when(mockLeaveDao.getTeamLeaveRequests("MGR001")).thenReturn(mockRs);
-        when(mockRs.next()).thenReturn(true, false);
-        when(mockRs.getInt("leave_application_id")).thenReturn(999);
+        List<Map<String, Object>> mockList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        row.put("leave_application_id", 999);
+        mockList.add(row);
+
+        when(mockLeaveDao.getTeamLeaveRequests("MGR001")).thenReturn(mockList);
 
         boolean result = ManagerService.isPendingLeave("MGR001", 100);
 

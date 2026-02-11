@@ -54,19 +54,29 @@ class ServiceViewCoverageTest {
         MockitoAnnotations.openMocks(this);
 
         // Common Mock Behavior
-        when(employeeDAO.getReportees(anyString())).thenReturn(mockResultSet);
+        // Create Mock List for refactored methods
+        java.util.List<java.util.Map<String, Object>> mockList = new java.util.ArrayList<>();
+        java.util.Map<String, Object> row = new java.util.HashMap<>();
+        row.put("employee_id", "1");
+        row.put("leave_application_id", 1);
+        row.put("first_name", "Test");
+        mockList.add(row);
+
+        // EmployeeDAO partial updates
+        when(employeeDAO.getReportees(anyString())).thenReturn(mockList);
         when(employeeDAO.getProfile(anyString())).thenReturn(mockResultSet);
-        when(employeeDAO.searchEmployees(anyString())).thenReturn(mockResultSet);
+        when(employeeDAO.searchEmployees(anyString())).thenReturn(mockList);
         when(employeeDAO.getUpcomingBirthdays()).thenReturn(mockResultSet);
         when(employeeDAO.getWorkAnniversaries()).thenReturn(mockResultSet);
         when(employeeDAO.getBirthdaysToday()).thenReturn(mockResultSet);
         when(employeeDAO.getWorkAnniversariesToday()).thenReturn(mockResultSet);
 
-        when(leaveDAO.getLeaveBalances(anyString())).thenReturn(mockResultSet);
-        when(leaveDAO.getMyLeaves(anyString())).thenReturn(mockResultSet);
-        when(leaveDAO.getTeamLeaveRequests(anyString())).thenReturn(mockResultSet);
-        when(leaveDAO.getTeamLeaveCalendar(anyString())).thenReturn(mockResultSet);
-        when(leaveDAO.getTeamLeaveBalances(anyString())).thenReturn(mockResultSet);
+        // LeaveDAO updates
+        when(leaveDAO.getLeaveBalances(anyString())).thenReturn(mockList);
+        when(leaveDAO.getMyLeaves(anyString())).thenReturn(mockList);
+        when(leaveDAO.getTeamLeaveRequests(anyString())).thenReturn(mockList);
+        when(leaveDAO.getTeamLeaveCalendar(anyString())).thenReturn(mockList);
+        when(leaveDAO.getTeamLeaveBalances(anyString())).thenReturn(mockList);
 
         when(attendanceDAO.getAttendanceHistory(anyString())).thenReturn(mockResultSet);
         when(attendanceDAO.getTeamAttendanceSummary(anyString())).thenReturn(mockResultSet);

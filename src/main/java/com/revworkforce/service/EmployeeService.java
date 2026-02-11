@@ -254,35 +254,32 @@ public class EmployeeService {
      * Searches for employees in the directory by name, ID, or email.
      * Displays a tabulated list of matching results.
      */
+    /**
+     * Searches for employees in the directory by name, ID, or email.
+     * Displays a tabulated list of matching results.
+     */
     public static void employeeDirectory() {
-        String keyword = InputUtil.readString("Search by name, ID, or email: ");
-
+        String keyword = InputUtil.readString("Enter Name, ID, or Email to search: ");
         try {
-            ResultSet rs = employeeDAO.searchEmployees(keyword);
+            java.util.List<java.util.Map<String, Object>> list = employeeDAO.searchEmployees(keyword);
 
-            System.out.println("\n--- EMPLOYEE DIRECTORY ---");
-            System.out.printf("%-10s | %-20s | %-25s | %-15s | %-15s%n", "ID", "Name", "Email", "Department",
-                    "Designation");
-            System.out.println(
-                    "------------------------------------------------------------------------------------------------");
-            boolean found = false;
-            while (rs.next()) {
-                found = true;
-                String name = rs.getString("first_name") + " "
-                        + (rs.getString("last_name") != null ? rs.getString("last_name") : "");
-                System.out.printf("%-10s | %-20s | %-25s | %-15s | %-15s%n",
-                        rs.getString("employee_id"),
-                        name,
-                        rs.getString("email"),
-                        rs.getString("department_name") != null ? rs.getString("department_name") : "N/A",
-                        rs.getString("designation_name") != null ? rs.getString("designation_name") : "N/A");
+            if (list.isEmpty()) { // Check if list is empty
+                System.out.println("No matching employees found.");
+            } else {
+                System.out.println("\n--- EMPLOYEE DIRECTORY ---");
+                for (java.util.Map<String, Object> row : list) {
+                    System.out.println(
+                            row.get("employee_id") + " | " +
+                                    row.get("first_name") + " "
+                                    + (row.get("last_name") != null ? row.get("last_name") : "") + " | " +
+                                    row.get("email") + " | " +
+                                    row.get("department_name") + " | " +
+                                    row.get("designation_name"));
+                }
             }
-            if (!found)
-                System.out.println("No employees found matching: " + keyword);
-
         } catch (Exception e) {
-            logger.error("Search failed: " + e.getMessage(), e);
-            System.out.println("Error: Search failed. " + e.getMessage());
+            logger.error("Error searching employees: " + e.getMessage(), e);
+            System.out.println("Error: " + e.getMessage());
         }
     }
 }

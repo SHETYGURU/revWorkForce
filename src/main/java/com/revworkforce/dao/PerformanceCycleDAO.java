@@ -13,20 +13,20 @@ import java.sql.*;
 public class PerformanceCycleDAO {
 
     public void createCycle(
-            String cycleName,
+            int year,
             Date startDate,
             Date endDate) throws Exception {
 
         String sql = """
                     INSERT INTO performance_cycles
-                    (cycle_name, start_date, end_date, is_active)
-                    VALUES (?, ?, ?, 1)
+                    (year, start_date, end_date, status)
+                    VALUES (?, ?, ?, 'ACTIVE')
                 """;
 
         try (Connection con = DBConnection.getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, cycleName);
+            ps.setInt(1, year);
             ps.setDate(2, startDate);
             ps.setDate(3, endDate);
             ps.executeUpdate();
@@ -37,7 +37,7 @@ public class PerformanceCycleDAO {
 
         String sql = """
                     UPDATE performance_cycles
-                    SET is_active = 0
+                    SET status = 'CLOSED'
                     WHERE cycle_id = ?
                 """;
 
@@ -52,7 +52,7 @@ public class PerformanceCycleDAO {
     public ResultSet getAllCycles() throws Exception {
 
         String sql = """
-                    SELECT cycle_id, cycle_name, start_date, end_date, is_active
+                    SELECT cycle_id, year, start_date, end_date, status
                     FROM performance_cycles
                     ORDER BY start_date DESC
                 """;
@@ -67,9 +67,28 @@ public class PerformanceCycleDAO {
      * This helper is used by PerformanceService to show valid options before
      * asking the employee to select a cycle for their self-review.
      */
+    public java.util.List<Integer> getActiveCycleIds() throws Exception {
+        java.util.List<Integer> ids = new java.util.ArrayList<>();
+        String sql = "SELECT cycle_id FROM performance_cycles WHERE status = 'ACTIVE'";
+
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ids.add(rs.getInt("cycle_id"));
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * Prints all currently active performance cycles to the console.
+     * This helper is used by PerformanceService to show valid options before
+     * asking the employee to select a cycle for their self-review.
+     */
     public void printActiveCycles() {
-        // Query only active cycles (is_active = 1), ordered by start date
-        String sql = "SELECT cycle_id, cycle_name, start_date, end_date FROM performance_cycles WHERE is_active = 1 ORDER BY start_date DESC";
+        // Query only active cycles (status = 'ACTIVE'), ordered by start date
+        String sql = "SELECT cycle_id, year, start_date, end_date FROM performance_cycles WHERE status = 'ACTIVE' ORDER BY start_date DESC";
 
         // Try-with-resources handles closing connection, statement, and result set
         // automatically
@@ -82,10 +101,10 @@ public class PerformanceCycleDAO {
             // Loop through results
             while (rs.next()) {
                 found = true;
-                // Display ID, Name, and Date Range to help user identify the correct cycle
+                // Display ID, Year, and Date Range to help user identify the correct cycle
                 System.out.println(
                         rs.getInt("cycle_id") + " | " +
-                                rs.getString("cycle_name") + " (" +
+                                "Year: " + rs.getInt("year") + " (" +
                                 rs.getDate("start_date") + " to " +
                                 rs.getDate("end_date") + ")");
             }

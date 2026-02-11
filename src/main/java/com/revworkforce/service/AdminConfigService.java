@@ -150,13 +150,14 @@ public class AdminConfigService {
     public static void configurePerformanceCycles() {
         try {
             System.out.println("\n--- CONFIGURE PERFORMANCE CYCLE ---");
-            String name = InputUtil.readString("Cycle Name (e.g. 2024 Appraisal): ");
+            System.out.println("\n--- CONFIGURE PERFORMANCE CYCLE ---");
+            int year = InputUtil.readInt("Performance Cycle Year (e.g. 2024): ");
             Date start = Date.valueOf(InputUtil.readString("Start Date (YYYY-MM-DD): "));
             Date end = Date.valueOf(InputUtil.readString("End Date (YYYY-MM-DD): "));
 
-            cycleDAO.createCycle(name, start, end);
-            AuditService.log(getAdminId(), "CREATE", "PERFORMANCE_CYCLES", "Name/Dates", name,
-                    "Performance cycle created");
+            cycleDAO.createCycle(year, start, end);
+            AuditService.log(getAdminId(), "CREATE", "PERFORMANCE_CYCLES", "Year/Dates", String.valueOf(year),
+                    "Performance cycle created for year " + year);
             System.out.println("Performance cycle configured successfully.");
         } catch (IllegalArgumentException e) {
             System.out.println("Invalid date format.");
